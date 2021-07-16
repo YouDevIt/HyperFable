@@ -1,2 +1,2 @@
-# HyperCiter
+# HyperCyter
 Interactive fiction with hyperlinks
