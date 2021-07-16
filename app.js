@@ -1,18 +1,32 @@
-var penna = {
-  type: 'thing',
-  name: 'penna',
-  gender: 'female',
+
+text=[
+  "You see nothing special."
+  ]
+
+function object(id,type){
+  this.id=id
+  this.type=type?type:'object'
+  this.name=id
+  this.desc=text[0]
+}
+function thing(id){
+  object.call(this,id,'thing')
+}
+function container(id){
+  object.call(this,id,'container')
+  this.transparent=true
+  this.open=true
+}
+function supporter(id){
+  object.call(this,id,'supporter')
+  this.enterable=true
 }
 
-var tavolo = {
-  type: 'supporter',
-  name: 'tavolo',
-}
+var penna=new thing('penna')
 
-var scatola = {
-  type: 'container',
-  name: 'scatola',
-}
+var tavolo=new supporter('tavolo')
+
+var scatola=new container('scatola')
 
 function allowDrop(ev) {
   ev.preventDefault();
