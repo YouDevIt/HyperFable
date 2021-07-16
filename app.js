@@ -60,3 +60,14 @@ function changeEditable() {
     document.documentElement.innerHTML = markup;
   }
 }
+
+function download(exportText){
+  var dataStr = "data:application/json;charset=utf-8," + encodeURIComponent(exportText);
+  var downloadAnchorNode = document.createElement('a');
+  downloadAnchorNode.setAttribute("href", dataStr);
+  downloadAnchorNode.setAttribute("download", "app.json");
+  document.body.appendChild(downloadAnchorNode);
+  alert(downloadAnchorNode)
+  downloadAnchorNode.click();
+  downloadAnchorNode.remove();
+}
