@@ -1,32 +1,59 @@
 
-text=[
-  "You see nothing special."
-  ]
+text_en={
+  nospecial: "You see nothing special."
+}
+text_it={
+  nospecial: "Non noti nulla di speciale."
+}
+var text=text_en
 
+function world(start){
+  this.objects={}
+  this.start=start
+  this.add=function(obj){
+    this.objects[obj.id]=obj
+  }
+}
 function object(id,type){
   this.id=id
   this.type=type?type:'object'
   this.name=id
-  this.desc=text[0]
+  this.desc=text.nospecial
+  this.loc=''
+}
+function group(id,type){
+  object.call(this,id,type?type:'group')
+  this.objects=[]
+}
+function room(id){
+  group.call(this,id,'room')
+}
+function exit(id){
+  object.call(this,id,'exit')
+  this.roomto=''
 }
 function thing(id){
   object.call(this,id,'thing')
 }
 function container(id){
-  object.call(this,id,'container')
+  group.call(this,id,'container')
   this.transparent=true
+  this.locked=false
   this.open=true
+  this.keys=[]
 }
 function supporter(id){
-  object.call(this,id,'supporter')
+  group.call(this,id,'supporter')
   this.enterable=true
 }
 
-var penna=new thing('penna')
-
-var tavolo=new supporter('tavolo')
-
-var scatola=new container('scatola')
+var $=new world('cucina')
+var cucina=new room('cucina')
+cucina.desc="Un'ampia cucina."
+$.add(cucina)
+$.add(new thing('penna'))
+$.add(new supporter('tavolo'))
+$.add(new container('scatola'))
 
 function allowDrop(ev) {
   ev.preventDefault();
@@ -40,10 +67,18 @@ function drop(ev) {
   ev.preventDefault();
   var data = ev.dataTransfer.getData("text");
   ev.target.innerHTML += data;
+  document.getElementById('message').innerHTML=data+' '+text.nospecial
+}
+
+function cap(txt){
+  return txt.charAt(0).toUpperCase()+txt.slice(1)
+}
+function print(txt){
+  document.write(txt)
 }
 
 function exp(obj) {
-  document.write(inner(obj.type,obj.name));
+  print(inner(obj.type,obj.name))
 }
 
 function inner(type,name) {
@@ -67,7 +102,6 @@ function download(exportText){
   downloadAnchorNode.setAttribute("href", dataStr);
   downloadAnchorNode.setAttribute("download", "app.json");
   document.body.appendChild(downloadAnchorNode);
-  alert(downloadAnchorNode)
   downloadAnchorNode.click();
   downloadAnchorNode.remove();
 }

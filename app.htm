@@ -11,20 +11,27 @@
     <input type="checkbox" onclick="changeEditable();">
     Edit&nbsp;&nbsp;
   </label>
-  <button style="position:absolute;right:8px;top:100px;" onclick="download('pippo')">SAVE</button>
+  
+<div id='room'>
 
-<h2>Cucina</h2>
-Qui puoi vedere un <script>exp(tavolo)</script> con sopra una <script>exp(penna)</script>.
+<h2><script>print(cap($.objects[$.start].name))</script></h2>
 
-<p><span class="text">Testo di prova con una <script>exp(scatola)</script>.</span>
+<script>print($.objects[$.start].desc)</script>
+<p>
+Qui puoi vedere un <script>exp($.objects['tavolo'])</script> con sopra una <script>exp($.objects['penna'])</script>.
 
-<p>    
-    <div>
+<p><span class="text">Testo di prova con una <script>exp($.objects['scatola'])</script>.</span>
+
+</div>
+    
+    <div id='inventory'>
         <h2>Inventario:</h2>
         <div id="inventario"></div>
     </div>
 
-    <p>
+<div id='message'>
+  aaa
+</div>
 
 </body>
 </html>
