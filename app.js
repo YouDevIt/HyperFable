@@ -3,7 +3,12 @@ function x(sentence){return sentence[langtag]}
 system={
   Nospecial:{en:"You see nothing special.",it:"Non noti nulla di speciale."},
   Inventory:{en:"Inventory",it:"Inventario"},
-  Carrynothing:{en:"You carry nothing.",it:"Non porti nulla."},
+  Yousee:{ en:"Here you can see ",it:"Qui puoi vedere "},
+  Youcarry:{ en:"You carry ",it:"Porti "},
+  Youwear:{ en:"You wear ",it:"Indossi "},
+  Youcarrynothing:{en:"You carry nothing.",it:"Non porti nulla."},
+  nothing :{en:"nothing",it: "nulla"},
+  and:{en:" and ",it:" e "},
 }
 g={
   artdet:{
@@ -138,9 +143,36 @@ function mark(text){
   text=text.replaceAll(/{(\w+)}/g,function(match,p1){
     var obj=world.objects[p1]
     var name=x(story[obj.name])
-    return x(g.artind)(obj)+innerobject(obj.type,name);
+    return innerobject(obj.type,name);
   })
   return text
+}
+
+function yousee (room){
+  return x(system.Yousee)+listobjs(room.objects)+"."
+}
+function youcarry (){
+  return x(system.Youcarry)+listobjs(getplayer().objects)+"."
+}
+function youwear (){
+  return x(system.Youwear)+listobjs(getplayer().wears)+"."
+}
+
+function listobjs(array){
+  if(array. length== 0)
+    return x (system.nothing)
+  var item=array [0]
+  var obj=getobj (item)
+  ret=x (g.artind)(obj)+innerobject(obj.type,x ( story [obj.name]));
+  for(var ct =1;ct<array. length-1;ct++){
+    item=array [ct]
+    obj=getobj (item)
+    ret+=", "+x (g.artind)(obj)+innerobject(obj.type,x ( story [obj.name]))
+  }
+  item=array[array.length -1]
+  obj=getobj(item)
+  ret+=x(system.and)+x(g.artind)(obj)+innerobject(obj.type,x(story[obj.name]))
+  return ret
 }
 
 function changeEditable() {
@@ -169,12 +201,22 @@ window.onload=function(){
 }
 
 function refresh(){
- inner('room',
-    "<h2>"+cap(x(story[getroom().name]))+"</h2>"
-    +mark(x(story[getroom().desc]))
-  )
-  inner('inventory',
-    "<h2>"+x(system.Inventory)+"</h2>"
-    +x(system.Carrynothing)
-  )
+  var room =getroom ()
+  var str
+  str="<h2>"+cap(x(story[room.name]))+"</h2>"
+    +mark(x(story[room.desc]))
+  if(room.objects.length>0){
+    str+="<p>"+yousee(room)
+  }
+  inner('room',str)
+  str="<h2>"+x(system.Inventory)+"</h2>"
+  if(getplayer().objects.length>0){
+    str+="<p>"+youcarry()
+    if(getplayer().wears.length>0){
+      str+="<p>"+youwear()
+    }
+  }else{
+    str= x (system.Youcarrynothing)
+  }
+  inner('inventory',str)
 }

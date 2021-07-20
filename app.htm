@@ -9,8 +9,8 @@
 <body>
 
 <label style="position:absolute;right:28px;top:10px">Edit <input type="checkbox" onclick="changeEditable()"></label>
-<button id="save" type="button" class="button" onclick="window.localStorage.setItem('world',JSON.stringify($)" style="position:absolute;right:28px;top:50px">SAVE</button>
-<button id="restore"type="button" class="button" onclick="window.localStorage.setItem('world',JSON.stringify($)" style="position:absolute;right:28px;top:90px">RESTORE</button>
+<button id="save" type="button" class="button" onclick="window.localStorage.setItem('world',JSON.stringify(world))" style="position:absolute;right:28px;top:50px">SAVE</button>
+<button id="restore" type="button" class="button" onclick="window.localStorage.setItem('world',JSON.stringify(world))" style="position:absolute;right:28px;top:90px">RESTORE</button>
  <img src="uk.png" id="en" onclick="changelang('en')" style="position:absolute;right:28px;top:130px;outline:solid 2px red;">
  <img src="it.png" id="it" onclick="changelang('it')" style="position:absolute;right:28px;top:170px;outline:none;">
 
