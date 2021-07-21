@@ -1,37 +1,32 @@
-
-var world=new world('player')
+setplayerid('player')
 var a= new actor('player')
 a.loc='kitchen'
 a.objects= ['pen','box']
 a.wears= ['hat','coat']
-world.add(a)
+addobject(a)
 var t=new thing('pen')
+t.addname('it','penna')
 t.itfemale=true
-world.add(t)
-t= new thing ('hat')
+addobject(t)
+t=new thing ('hat')
+t.addname('it','cappello')
 t.wearable= true
-world.add(t)
+addobject(t)
 t= new thing ('coat')
+t.addname('it','cappotto')
 t.wearable= true
-world.add(t)
+addobject(t)
 t=new supporter('table')
-world.add(t)
+t.addname('it','tavolo')
+addobject(t)
 t=new container('box')
+t.addname('it','scatola')
 t.itfemale=true
-world.add(t)
+addobject(t)
 var r=new room('kitchen')
-r.desc='kitchendesc'
+r.addname('it','cucina')
+r.desc="A large kitchen with a {table}."
+r.adddesc('it',"Un'ampia cucina in cui vedi un {table}.")
 r.objects=['pen','box']
-world.add(r)
-
-story={
-  kitchen:{en:'kitchen',it:'cucina'},
-  kitchendesc:{
-    en:"A large kitchen with a {table}.",
-    it:"Un'ampia cucina in cui vedi un {table}."},
-  pen:{en:'pen',it:'penna'},
-  table:{en:'table',it:'tavolo'},
-  box:{en:'box',it:'scatola'},
-  hat :{en: 'hat',it: 'cappello'},
-  coat:{en:'coat',it: 'cappotto'},
-}
+//inner ('$message',JSON. stringify(world))
+addobject(r)

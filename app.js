@@ -34,14 +34,14 @@ function changelang(code){
   switch(String(code)){
     default:
     case 'en':
-      choutline('$en',"solid 2px red;")
+      choutline('$en',"solid 4px red;")
       choutline('$it',"none;")
       getel("$save").innerHTML="SAVE"
       getel("$restore").innerHTML="RESTORE"
       langtag='en'
       break
     case 'it':
-      choutline('$it',"solid 2px red;")
+      choutline('$it',"solid 4px red;")
       choutline('$en',"none;")
       getel("$save").innerHTML="SALVA"
       getel("$restore").innerHTML="RIPRISTINA"
