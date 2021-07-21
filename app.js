@@ -1,5 +1,14 @@
+function isString(s) {
+  return typeof(s)==='string'||s instanceof String
+}
+var langdef='en'
 var langtag='en'
-function x(sentence){return sentence[langtag]}
+function x(sentence){
+  if(sentence instanceof String)
+    return sentence
+  var ret=sentence[langtag]
+  return ret?ret:sentence[langdef]
+}
 system={
   Nospecial:{en:"You see nothing special.",it:"Non noti nulla di speciale."},
   Inventory:{en:"Inventory",it:"Inventario"},
@@ -7,7 +16,7 @@ system={
   Youcarry:{ en:"You carry ",it:"Porti "},
   Youwear:{ en:"You wear ",it:"Indossi "},
   Youcarrynothing:{en:"You carry nothing.",it:"Non porti nulla."},
-  nothing :{en:"nothing",it: "nulla"},
+  nothing :{en:"nothing",it:"nulla"},
   and:{en:" and ",it:" e "},
 }
 g={
@@ -25,17 +34,17 @@ function changelang(code){
   switch(String(code)){
     default:
     case 'en':
-      choutline('en',"solid 2px red;")
-      choutline('it',"none;")
-      getel("save").innerHTML="SAVE"
-      getel("restore").innerHTML="RESTORE"
+      choutline('$en',"solid 2px red;")
+      choutline('$it',"none;")
+      getel("$save").innerHTML="SAVE"
+      getel("$restore").innerHTML="RESTORE"
       langtag='en'
       break
     case 'it':
-      choutline('it',"solid 2px red;")
-      choutline('en',"none;")
-      getel("save").innerHTML="SALVA"
-      getel("restore").innerHTML="RIPRISTINA"
+      choutline('$it',"solid 2px red;")
+      choutline('$en',"none;")
+      getel("$save").innerHTML="SALVA"
+      getel("$restore").innerHTML="RIPRISTINA"
       langtag='it'
       break
   }
@@ -48,19 +57,32 @@ function choutline(el,newstr){
   getel(el).style.cssText=str.substring(0,idx+9)+newstr
 }
 
-function world(player){
-  this.objects={}
-  this. player= player
-  this.add=function(obj){
-    this.objects[obj.id]=obj
-  }
+function world(){
+  this.objects={void:{id:'void',name:'void',loc:'void'}}
+  this.playerid='void'
+  this.add=function(obj){this.objects[obj.id]=obj}
 }
+var world=new world()
 function object(id,type){
   this.id=id
   this.type=type?type:'object'
   this.name=id
   this.desc=system.Nospecial
-  this.loc=''
+  this.loc='void'
+  this.addprop=function(prop,newlang,newprop){
+    if(isString(this[prop])){
+      var temp=this[prop]
+      this[prop]={}
+      this[prop][langdef]=temp
+    }
+    this[prop][newlang]=newprop
+  }
+  this.addname=function(newlang,newname){
+    this.addprop('name',newlang,newname)
+  }
+  this.adddesc=function(newlang,newdesc){
+    this.addprop('desc',newlang,newdesc)
+  }
 }
 function group(id,type){
   object.call(this,id,type?type:'group')
@@ -75,7 +97,7 @@ function room(id){
 }
 function exit(id){
   object.call(this,id,'exit')
-  this.roomto=''
+  this.roomto='@void'
 }
 function thing(id){
   object.call(this,id,'thing')
@@ -91,59 +113,34 @@ function supporter(id){
   group.call(this,id,'supporter')
   this.enterable=true
 }
-
-function getobj( id){
-  return world. objects[id]
-}
-function getplayer (){
-  return getobj (world .player)
-}
-function getroom (){
-  return getobj(getplayer().loc)
-}
+function addobject(obj){world.add(obj)}
+function setplayerid(playerid){world.playerid=playerid}
+function getobj(id){return world.objects[id]}
+function getplayer(){return getobj(world.playerid)}
+function getroom(){return getobj(getplayer().loc)}
 
 function getel(elname){
   return document.getElementById(elname);
 }
+
 function inner(elname,text){
   getel(elname).innerHTML=text
 }
 
-function allowDrop(ev) {
-  ev.preventDefault();
-}
+function cap(txt){return txt.charAt(0).toUpperCase()+txt.slice(1)}
+function print(txt){document.write(txt)}
 
-function drag(ev) {
-  ev.dataTransfer.setData("text",ev.target.innerHTML);
-}
+function exp(obj) {print(innerobject(obj.id,obj.type,obj.name))}
 
-function drop(ev) {
-  ev.preventDefault();
-  var data = ev.dataTransfer.getData("text");
-  ev.target.innerHTML += data;
-  document.getElementById('message').innerHTML=x(system.Nospecial)
-}
-
-function cap(txt){
-  return txt.charAt(0).toUpperCase()+txt.slice(1)
-}
-function print(txt){
-  document.write(txt)
-}
-
-function exp(obj) {
-  print(innerobject(obj.type,obj.name))
-}
-
-function innerobject(type,name) {
-  return '<span class="'+type+'" id="div1" draggable="true" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)">'+name+'</span>';
+function innerobject(id,type,name) {
+  return '<span class="'+type+'" id="'+id+'" draggable="true" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)">'+name+'</span>';
 }
 
 function mark(text){
   text=text.replaceAll(/{(\w+)}/g,function(match,p1){
     var obj=world.objects[p1]
-    var name=x(story[obj.name])
-    return innerobject(obj.type,name);
+    var name=x(obj.name)
+    return innerobject(obj.id,obj.type,name);
   })
   return text
 }
@@ -160,18 +157,18 @@ function youwear (){
 
 function listobjs(array){
   if(array. length== 0)
-    return x (system.nothing)
+    return x(system.nothing)
   var item=array [0]
   var obj=getobj (item)
-  ret=x (g.artind)(obj)+innerobject(obj.type,x ( story [obj.name]));
-  for(var ct =1;ct<array. length-1;ct++){
+  ret=x(g.artind)(obj)+innerobject(obj.id,obj.type,x(obj.name));
+  for(var ct =1;ct<array.length-1;ct++){
     item=array [ct]
     obj=getobj (item)
-    ret+=", "+x (g.artind)(obj)+innerobject(obj.type,x ( story [obj.name]))
+    ret+=", "+x(g.artind)(obj)+innerobject(obj.id,obj.type,x(obj.name))
   }
   item=array[array.length -1]
   obj=getobj(item)
-  ret+=x(system.and)+x(g.artind)(obj)+innerobject(obj.type,x(story[obj.name]))
+  ret+=x(system.and)+x(g.artind)(obj)+innerobject(obj.id,obj.type,x(obj.name))
   return ret
 }
 
@@ -179,9 +176,9 @@ function changeEditable() {
   document.body.contentEditable = document.body.contentEditable=='true'? 'false': 'true';
   if(document.body.contentEditable == 'false') {
     var markup = document.documentElement.innerHTML;
-    markup = markup.replaceAll(/{t (\w+)}/g,function(match,p1){return innerobject("thing",p1);});
-    markup = markup.replaceAll(/{s (\w+)}/g,function(match,p1){return innerobject("supporter",p1);});
-    markup = markup.replaceAll(/{c (\w+)}/g,function(match,p1){return innerobject("container",p1);});
+    markup = markup.replaceAll(/{t (\w+)}/g,function(match,p1){return innerobject(p1,"thing",p1);});
+    markup = markup.replaceAll(/{s (\w+)}/g,function(match,p1){return innerobject(p1,"supporter",p1);});
+    markup = markup.replaceAll(/{c (\w+)}/g,function(match,p1){return innerobject(p1,"container",p1);});
     document.documentElement.innerHTML = markup;
   }
 }
@@ -196,27 +193,37 @@ function download(exportText){
   downloadAnchorNode.remove();
 }
 
-window.onload=function(){
- refresh()
+function allowDrop(ev) {ev.preventDefault()}
+function drag(ev) {ev.dataTransfer.setData("text",ev.target.id)}
+function drop(ev) {
+  ev.preventDefault()
+  var source = ev.dataTransfer.getData("text")
+  var drain = ev.target.id
+  dragndrop(source,drain)
+}
+function dragndrop(source, drain){
+  inner('$message',source+" "+drain)
 }
 
 function refresh(){
-  var room =getroom ()
+  var room=getroom()
   var str
-  str="<h2>"+cap(x(story[room.name]))+"</h2>"
-    +mark(x(story[room.desc]))
+  str='<h2 id="@'+room.id+'" draggable="false" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)">'+cap(x(room.name))+'</h2>'
+    +mark(x(room.desc))
   if(room.objects.length>0){
     str+="<p>"+yousee(room)
   }
-  inner('room',str)
-  str="<h2>"+x(system.Inventory)+"</h2>"
+  inner('$room',str)
+  str='<h2 id="@inventory" draggable="false" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)">'+x(system.Inventory)+"</h2>"
   if(getplayer().objects.length>0){
     str+="<p>"+youcarry()
     if(getplayer().wears.length>0){
       str+="<p>"+youwear()
     }
   }else{
-    str= x (system.Youcarrynothing)
+    str= x(system.Youcarrynothing)
   }
-  inner('inventory',str)
+  inner('$inventory',str)
 }
+
+window.onload=function(){refresh()}

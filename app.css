@@ -1,7 +1,7 @@
 @font-face {font-family: 'special'; src: url('specialelite.ttf');}
 body {
   padding: 32px;
-  font-family: 'special', serif;
+  font-family: 'special',serif;
   font-size: 18px;
   text-shadow: 4px 4px 4px #aaa;
   background-color: #ddb;
