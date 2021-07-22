@@ -8,11 +8,22 @@
 </head>
 <body>
 
-<label style="position:absolute;right:28px;top:10px">Edit <input type="checkbox" onclick="changeEditable()"></label>
-<button id="$save" type="button" class="button" onclick="window.localStorage.setItem('world',JSON.stringify(world))" style="position:absolute;right:28px;top:50px">SAVE</button>
-<button id="$restore" type="button" class="button" onclick="window.localStorage.setItem('world',JSON.stringify(world))" style="position:absolute;right:28px;top:90px">RESTORE</button>
- <img src="uk.png" id="$en" onclick="changelang('en')" style="position:absolute;right:28px;top:130px;outline:solid 2px red;">
- <img src="it.png" id="$it" onclick="changelang('it')" style="position:absolute;right:28px;top:170px;outline:none;">
+<table align="right">
+<tr><td align="right">
+<label>Edit <input type="checkbox" onclick="changeEditable()"></label>
+</td></tr><tr><td>
+  &nbsp;
+</td></tr><tr><td align="right">
+<button id="$save" type="button" class="button" onclick="window.localStorage.setItem('world',JSON.stringify(world))">SAVE</button>
+</td></tr><tr><td align="right">
+<button id="$restore" type="button" class="button" onclick="window.localStorage.setItem('world',JSON.stringify(world))">RESTORE</button>
+</td></tr><tr><td>
+  &nbsp;
+</td></tr><tr><td align="right">
+<img src="uk.svg" id="$en" onclick="changelang('en')" style="box-shadow:4px 4px 4px #aaa;width:32px;outline:solid red;">
+</td></tr><tr><td align="right">
+<img src="it.svg" id="$it" onclick="changelang('it')" style="box-shadow:4px 4px 4px #aaa;width:32px;outline:solid black;">
+</td></tr></table>
 
 <p>
 <div id='$room'></div>

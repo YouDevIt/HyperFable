@@ -34,15 +34,15 @@ function changelang(code){
   switch(String(code)){
     default:
     case 'en':
-      choutline('$en',"solid 4px red;")
-      choutline('$it',"none;")
+      choutline('$en',"solid red;")
+      choutline('$it',"solid black;")
       getel("$save").innerHTML="SAVE"
       getel("$restore").innerHTML="RESTORE"
       langtag='en'
       break
     case 'it':
-      choutline('$it',"solid 4px red;")
-      choutline('$en',"none;")
+      choutline('$it',"solid red;")
+      choutline('$en',"solid black;")
       getel("$save").innerHTML="SALVA"
       getel("$restore").innerHTML="RIPRISTINA"
       langtag='it'
@@ -202,10 +202,12 @@ function drop(ev) {
   dragndrop(source,drain)
 }
 function dragndrop(source, drain){
+  if(drain=='@inventory'){
+  }
   inner('$message',source+" "+drain)
 }
 
-function refresh(){
+function refreshRoom(){
   var room=getroom()
   var str
   str='<h2 id="@'+room.id+'" draggable="false" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)">'+cap(x(room.name))+'</h2>'
@@ -214,7 +216,9 @@ function refresh(){
     str+="<p>"+yousee(room)
   }
   inner('$room',str)
-  str='<h2 id="@inventory" draggable="false" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)">'+x(system.Inventory)+"</h2>"
+}
+function refreshInventory(){
+  var str='<h2 id="@inventory" draggable="false" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)">'+x(system.Inventory)+"</h2>"
   if(getplayer().objects.length>0){
     str+="<p>"+youcarry()
     if(getplayer().wears.length>0){
@@ -224,6 +228,10 @@ function refresh(){
     str= x(system.Youcarrynothing)
   }
   inner('$inventory',str)
+}
+function refresh(){
+  refreshRoom()
+  refreshInventory()
 }
 
 window.onload=function(){refresh()}
