@@ -1,7 +1,17 @@
+
 function isString(s) {
   return typeof(s)==='string'||s instanceof String
 }
-var langdef='en'
+function remove(array,item){
+  const idx=array.indexOf(item)
+  if(idx>=0){
+    array.splice(idx,1)
+    return true
+  }
+  return false
+}
+
+const langdef='en'
 var langtag='en'
 function x(sentence){
   if(sentence instanceof String)
@@ -10,11 +20,14 @@ function x(sentence){
   return ret?ret:sentence[langdef]
 }
 system={
+  Nothingtodo:{en:"Nothing to do.",it:"Niente da fare."},
+  Cantdo:{en:"You can't do that.",it:"Non puoi farlo."},
   Nospecial:{en:"You see nothing special.",it:"Non noti nulla di speciale."},
   Inventory:{en:"Inventory",it:"Inventario"},
-  Yousee:{ en:"Here you can see ",it:"Qui puoi vedere "},
-  Youcarry:{ en:"You carry ",it:"Porti "},
-  Youwear:{ en:"You wear ",it:"Indossi "},
+  Yousee:{en:"Here you can see ",it:"Qui puoi vedere "},
+  Youcarry:{en:"You carry ",it:"Porti "},
+  Youwear:{en:"You wear ",it:"Indossi "},
+  Youtake:{en:"You take ",it:"Hai preso "},
   Youcarrynothing:{en:"You carry nothing.",it:"Non porti nulla."},
   nothing :{en:"nothing",it:"nulla"},
   and:{en:" and ",it:" e "},
@@ -58,13 +71,17 @@ function choutline(el,newstr){
 }
 
 function world(){
-  this.objects={void:{id:'void',name:'void',loc:'void'}}
-  this.playerid='void'
+  this.loc='void'
+  this.objects={void:{id:'void',name:'void',loc:'void',objects:['void ']}}
+  this.carried=[]
+  this.worn=[]
   this.add=function(obj){this.objects[obj.id]=obj}
 }
 var world=new world()
+function start(roomid){world.loc=roomid}
 function object(id,type){
   this.id=id
+  addobject(this)
   this.type=type?type:'object'
   this.name=id
   this.desc=system.Nospecial
@@ -87,6 +104,10 @@ function object(id,type){
 function group(id,type){
   object.call(this,id,type?type:'group')
   this.objects=[]
+  this.add=function(obj){
+    this.objects.push(obj.id)
+    obj.loc=this.id
+  }
 }
 function actor(id){
   group.call(this,id,'actor')
@@ -97,7 +118,7 @@ function room(id){
 }
 function exit(id){
   object.call(this,id,'exit')
-  this.roomto='@void'
+  this.roomto='void'
 }
 function thing(id){
   object.call(this,id,'thing')
@@ -114,23 +135,15 @@ function supporter(id){
   this.enterable=true
 }
 function addobject(obj){world.add(obj)}
-function setplayerid(playerid){world.playerid=playerid}
 function getobj(id){return world.objects[id]}
-function getplayer(){return getobj(world.playerid)}
-function getroom(){return getobj(getplayer().loc)}
+function getroom(){return world.objects[world.loc]}
 
-function getel(elname){
-  return document.getElementById(elname);
-}
+function getel(elname){return document.getElementById(elname);}
 
-function inner(elname,text){
-  getel(elname).innerHTML=text
-}
+function inner(elname,text){getel(elname).innerHTML=text}
+function msg(text){inner('$message',text)}
 
 function cap(txt){return txt.charAt(0).toUpperCase()+txt.slice(1)}
-function print(txt){document.write(txt)}
-
-function exp(obj) {print(innerobject(obj.id,obj.type,obj.name))}
 
 function innerobject(id,type,name) {
   return '<span class="'+type+'" id="'+id+'" draggable="true" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)">'+name+'</span>';
@@ -149,24 +162,26 @@ function yousee (room){
   return x(system.Yousee)+listobjs(room.objects)+"."
 }
 function youcarry (){
-  return x(system.Youcarry)+listobjs(getplayer().objects)+"."
+  return x(system.Youcarry)+listobjs(world.carried)+"."
 }
 function youwear (){
-  return x(system.Youwear)+listobjs(getplayer().wears)+"."
+  return x(system.Youwear)+listobjs(world.worn)+"."
 }
 
 function listobjs(array){
-  if(array. length== 0)
+  if(array.length==0)
     return x(system.nothing)
-  var item=array [0]
-  var obj=getobj (item)
-  ret=x(g.artind)(obj)+innerobject(obj.id,obj.type,x(obj.name));
-  for(var ct =1;ct<array.length-1;ct++){
+  var item=array[0]
+  var obj=getobj(item)
+  ret=x(g.artind)(obj)+innerobject(obj.id,obj.type,x(obj.name))
+  if(array.length==1)
+    return ret
+  for(var ct=1;ct<array.length-1;ct++){
     item=array [ct]
     obj=getobj (item)
     ret+=", "+x(g.artind)(obj)+innerobject(obj.id,obj.type,x(obj.name))
   }
-  item=array[array.length -1]
+  item=array[array.length-1]
   obj=getobj(item)
   ret+=x(system.and)+x(g.artind)(obj)+innerobject(obj.id,obj.type,x(obj.name))
   return ret
@@ -203,35 +218,73 @@ function drop(ev) {
 }
 function dragndrop(source, drain){
   if(drain=='@inventory'){
+    var obj=getobj(source)
+    var loc=obj.loc
+    if(loc=='@carried'||loc=='@worn'){
+      msg(x(system.Nothingtodo))
+      return
+    }
+    var org=getobj(loc)
+    if(remove(org.objects,obj.id)){
+      world.carried.push(obj.id)
+      obj.loc='@carried'
+      msg(x(system.Youtake)+x(g.artdet)(obj)+x(obj.name)+'.')
+      refresh()
+    }else{
+      msg(x(system.Cantdo))
+    }
+  }else{
+    var dobj=getobj(drain)
+    var sobj=getobj(source)
+    switch(dobj.type){
+      default:
+        msg(x(system.Cantdo))
+        break
+      case 'room':
+        if(sobj.loc=='@carried'){
+          remove(world.carried,sobj.id)
+          dobj.add(sobj)
+          refresh()
+        }
+        return
+      case 'container':
+      case 'supporter':
+        if(sobj.loc=='@carried'){
+          remove(world.carried,sobj.id)
+          dobj.objects.push[sobj.id]
+          refresh()
+        }
+        return
+    }
+    msg(source+" "+drain)
   }
-  inner('$message',source+" "+drain)
 }
 
 function refreshRoom(){
   var room=getroom()
   var str
-  str='<h2 id="@'+room.id+'" draggable="false" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)">'+cap(x(room.name))+'</h2>'
+  str='<h2 id="'+room.id+'" draggable="false" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)">'+cap(x(room.name))+'</h2>'
     +mark(x(room.desc))
-  if(room.objects.length>0){
+  if(room.objects.length>0)
     str+="<p>"+yousee(room)
-  }
   inner('$room',str)
 }
 function refreshInventory(){
   var str='<h2 id="@inventory" draggable="false" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)">'+x(system.Inventory)+"</h2>"
-  if(getplayer().objects.length>0){
+  if(world.carried.length>0){
     str+="<p>"+youcarry()
-    if(getplayer().wears.length>0){
+    if(world.worn.length>0){
       str+="<p>"+youwear()
     }
   }else{
-    str= x(system.Youcarrynothing)
+    str+=x(system.Youcarrynothing)
   }
   inner('$inventory',str)
 }
 function refresh(){
   refreshRoom()
   refreshInventory()
+  msg("")
 }
 
 window.onload=function(){refresh()}
