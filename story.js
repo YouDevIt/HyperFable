@@ -20,5 +20,6 @@ t=new supporter('table')
 t.addname('it','tavolo')
 t=new container('box')
 t.addname('it','scatola')
+t.closed=true
 t.itfemale=true
 r.add(t)
