@@ -1,5 +1,5 @@
 @font-face {font-family: 'special'; src: url('specialelite.ttf');}
-body {
+body{
   padding: 32px;
   font-family: 'special',serif;
   font-size: 18px;
@@ -7,7 +7,13 @@ body {
   background-color: #ddb;
   user-select: none;
 }
-.thing {
+
+.flag{
+  box-shadow:4px 4px 4px #aaa;
+  width:32px;
+}
+
+.thing{
   border: 2px solid #666;
   background-color: #ddd;
   font-weight: bold;
@@ -16,7 +22,7 @@ body {
   padding: 4px;
   cursor: move;
 }
-.supporter {
+.supporter{
   border: 2px dotted #666;
   background-color: #ddd;
   font-weight: bolder;
@@ -25,7 +31,7 @@ body {
   padding: 4px;
   cursor: move;
 }
-.container {
+.container{
   border: 2px dashed #666;
   background-color: #ddd;
   font-weight: bolder;
@@ -38,18 +44,16 @@ body {
 ::selection {color:white;background:black;}
 
 .button {
-  display: inline-block;
-  cursor: pointer;
-  color: #000;
-  background-color: #ddd;
-  box-shadow: 4px 4px 4px #aaa;
+  display:inline-block;
+  cursor:pointer;
+  color:#000;
+  background-color:#ddd;
+  box-shadow:4px 4px 4px #aaa;
 }
-
-.button:hover {background-color: #f88}
-
-.button:active {
+.button:hover{background-color:#f88}
+.button:active{
   color:#fff;
-  background-color: #f00;
-  transform: translateX(4px) translateY(4px);
-  box-shadow: none;
+  background-color:#f00;
+  transform:translateX(4px) translateY(4px);
+  box-shadow:none;
 }

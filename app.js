@@ -4,16 +4,13 @@ function isString(s) {
 }
 function remove(array,item){
   const idx=array.indexOf(item)
-  if(idx>=0){
-    array.splice(idx,1)
-    return true
-  }
+  if(idx>=0){array.splice(idx,1);return true}
   return false
 }
 
 const langdef='en'
 var langtag='en'
-function x(sentence,obj){
+function x(sentence){
   var ret,lan
   if(sentence instanceof String){
     lan=langdef
@@ -26,90 +23,126 @@ function x(sentence,obj){
       ret=sentence[lan]
     }
   }
-  return isString(ret)?decode(lan,ret,obj):ret
+  return isString(ret)?decode(lan,ret):ret
 }
-function decode(lan,txt,obj){
-  txt=txt.replaceAll(/\[([a-zA-Z\u00C0-\u017F]+)\]/g,function(match,p1){
+var $obj,$obj2
+function decode(lan,txt){
+  txt=txt.replaceAll(/\[([^\]]+)\]/g,function(match,p1){
     switch(lan){
       case 'en':
-        return decodeen(p1,obj)
+        return decodeen(p1)
       case 'it':
-        return decodeit(p1,obj)
+        return decodeit(p1)
     }
     return p1
   })
   return txt
 }
-function decodeen(p1,obj){
+function decodeen(p1){
+  var o=$obj
+  if(p1.charAt(p1.length-1)=='2'){
+    o=$obj2
+    p1=p1.substring(0,p1.length-1)
+  }
   switch(p1){
+    case 'The object':
+      return cap(en.detart(o))+innerobject(o)
+    case 'the object':
+      return en.detart(o)+innerobject(o)
+    case 'an object':
+      return en.indart(o)+innerobject(o)
     case 'is':
-      return obj.enplural?'are':'is'
+      return o.enplural?'are':'is'
   }
   return p1
 }
-function decodeit(p1,obj){
+function decodeit(p1){
+  var o=$obj
+  if(p1.charAt(p1.length-1)=='2'){
+    o=$obj2
+    p1=p1.substring(0,p1.length-1)
+  }
   switch(p1){
+    case "L'oggetto":
+      return cap(it.artdet(o))+innerobject(o)
+    case "l'oggetto":
+      return it.artdet(o)+innerobject(o)
+    case "nell'oggetto":
+      return "ne"+it.artdet(o)+innerobject(o)
+    case "Nell'oggetto":
+      return "Ne"+it.artdet(o)+innerobject(o)
+    case "sull'oggetto":
+      return "su"+it.artdet(o)+innerobject(o)
+    case "Sull'oggetto":
+      return "Su"+it.artdet(o)+innerobject(o)
+    case "dall'oggetto":
+      return "da"+it.artdet(o)+innerobject(o)
+    case "un oggetto":
+      return it.artind(o)+innerobject(o)
+      break
     case 'è':
-      return obj.enplural?'sono':'è'
+      return o.itplural?'sono':'è'
     case 'o':
-      return obj.itfemale?
-        (obj.itplural?'e':'a'):
-        (obj.itplural?'o':'i')
+      return o.itfemale?
+        (o.itplural?'e':'a'):
+        (o.itplural?'o':'i')
   }
   return p1
 }
-system={
+w={
   Langchanged:{
     en:"Now the story is in English.",
     it:"Ora la storia è in italiano.",
   },
   Nothingtodo:{en:"Nothing to do.",it:"Niente da fare."},
   Cantdo:{en:"You can't do that. ",it:"Non puoi farlo. "},
-  isclosed:{en:"[is] closed.",it:"[è] chius[o]."},
+  Itsclosed:{en:"[The object] [is] closed.",it:"[L'oggetto] [è] chius[o]."},
   Nospecial:{
     en:"You see nothing special.",
     it:"Non noti nulla di speciale."},
   Inventory:{en:"Inventory",it:"Inventario"},
   Yousee:{en:"Here you can see ",it:"Qui puoi vedere "},
+  Inyousee:{en:"In [the object] you see ",it:"[Nell'oggetto] vedi "},
+  Onyousee:{en:"On [the object] you see ",it:"[Sull'oggetto] vedi "},
   Youcarry:{en:"You carry ",it:"Porti "},
   Youwear:{en:"You wear ",it:"Indossi "},
-  Youtake:{en:"You take ",it:"Hai preso "},
-  Youput:{en:"You put ",it:"Hai messo "},
-  Youdrop:{en:"You drop ",it:"Hai lasciato "},
+  Youtake:{
+    en:"You take [the object] from [the object2].",
+    it:"Hai preso [l'oggetto] [dall'oggetto2]."
+  },
+  Youputin:{
+    en:"You put [the object] in [the object2].",
+    it:"Hai messo [l'oggetto] [nell'oggetto2].",
+  },
+  Youputon:{
+    en:"You put [the object] on [the object2].",
+    it:"Hai messo [l'oggetto] [sull'oggetto2].",
+  },
+  Youdrop:{
+    en:"You drop [the object] in [the object2].",
+    it:"Hai lasciato [l'oggetto] [nell'oggetto2].",
+  },
   Youcarrynothing:{en:"You carry nothing.",it:"Non porti nulla."},
-  nothing :{en:"nothing",it:"nulla"},
+  nothing:{en:"nothing",it:"nulla"},
+  anobject:{en:"[an object]",it:"[un oggetto]"},
   and:{en:" and ",it:" e "},
   SAVE:{en:"SAVE",it:"SALVA"},
+  RESTART:{en:"RESTART",it:"RICOMINCIA"},
   RESTORE:{en:"RESTORE",it:"RIPRISTINA"},
 }
-g={
-  the:{
-    en:function(){return 'the '},
-    it:function(obj){return obj.itfemale?'la ':'il '},
+var it={
+  artdet:function(obj){
+    return (obj.itfemale?"la ":"il ")
   },
-  a:{
-    en:function(obj){return 'a '},
-    it:function(obj){return obj.itfemale?'una ':'un '},
+  artind:function(obj){
+    return (obj.itfemale?"una ":"un ")
   },
-  ofthe:{
-    en:function(){return 'of the '},
-    it:function(obj){return 'de'+g.the.it(obj)},
-  },
-  tothe:{
-    en:function(){return 'to the '},
-    it:function(obj){return 'a'+g.the.it(obj)},
-  },
-  fromthe:{
-    en:function(){return 'from the '},
-    it:function(obj){return 'da'+g.the.it(obj)},
-  },
-  inthe:{
-    en:function(){return 'in the '},
-    it:function(obj){return 'ne'+g.the.it(obj)},
-  },
-  onthe:{
-    en:function(){return 'on the '},
-    it:function(obj){return 'su'+g.the.it(obj)},
+}
+var en={
+  detart:function(obj){return obj.enproper?"":"the "},
+  indart:function(obj){
+    var first=x(obj.name).charAt(0)
+    return ("aeiouAEIOU".indexOf(first)>=0)?"an ":"a "
   },
 }
 
@@ -117,10 +150,11 @@ function changelang(code){
   langtag=code
   choutline('$en',code=="en"?"solid red;":"solid black;")
   choutline('$it',code=="it"?"solid red;":"solid black;")
-  getel("$save").innerHTML=x(system.SAVE)
-  getel("$restore").innerHTML=x(system.RESTORE)
+  getel("$save").innerHTML=x(w.SAVE)
+  getel("$restore").innerHTML=x(w.RESTORE)
+  getel("$restart").innerHTML=x(w.RESTART)
   refresh()
-  msg(x(system.Langchanged))
+  msg(x(w.Langchanged))
 }
 
 function choutline(el,newstr){
@@ -143,7 +177,7 @@ function object(id,type){
   addobject(this)
   this.type=type?type:'object'
   this.name=id
-  this.desc=system.Nospecial
+  this.desc=w.Nospecial
   this.loc='void'
   this.addprop=function(prop,newlang,newprop){
     if(isString(this[prop])){
@@ -204,57 +238,57 @@ function msg(text){inner('$message',text)}
 
 function cap(txt){return txt.charAt(0).toUpperCase()+txt.slice(1)}
 
-function innerobject(id,type,name) {
-  return '<span class="'+type+'" id="'+id+'" draggable="true" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)">'+name+'</span>';
+function innerobject(obj) {
+  var id=obj.id
+  var type= obj.type
+  var name=x(obj.name)
+  return '<span class="'+type+'" id="'+id+'" draggable="true" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)" onclick="clickon(event)">'+name+'</span>';
 }
 
 function mark(text){
-  text=text.replaceAll(/{(\w+)}/g,function(match,p1){
+  text=text.replaceAll(/{([^}]+)}/g,function(match,p1){
     var obj=world.objects[p1]
-    var name=x(obj.name)
-    return innerobject(obj.id,obj.type,name);
+    return innerobject(obj);
   })
   return text
 }
 
-function yousee (room){
-  return x(system.Yousee)+listobjs(room.objects)+"."
+function yousee(room){
+  return x(w.Yousee)+listobjs(room.objects)+"."
 }
-function youcarry (){
-  return x(system.Youcarry)+listobjs(world.carried)+"."
+function inyousee(obj){
+  $obj=obj
+  return x(w.Inyousee)+listobjs(obj.objects)+"."
 }
-function youwear (){
-  return x(system.Youwear)+listobjs(world.worn)+"."
+function onyousee(obj){
+  $obj=obj
+  return x(w.Onyousee)+listobjs(obj.objects)+"."
+}
+function youcarry(){
+  return x(w.Youcarry)+listobjs(world.carried)+"."
+}
+function youwear(){
+  return x(w.Youwear)+listobjs(world.worn)+"."
 }
 
 function listobjs(array){
   if(array.length==0)
-    return x(system.nothing)
-  var item=array[0]
-  var obj=getobj(item)
-  ret=x(g.a)(obj)+innerobject(obj.id,obj.type,x(obj.name))
+    return x(w.nothing)
+  $obj=getobj(array[0])
+  ret=x(w.anobject)
   if(array.length==1)
     return ret
   for(var ct=1;ct<array.length-1;ct++){
-    item=array [ct]
-    obj=getobj (item)
-    ret+=", "+x(g.a)(obj)+innerobject(obj.id,obj.type,x(obj.name))
+    $obj=getobj(array[ct])
+    ret+=", "+x(w.anobject)
   }
-  item=array[array.length-1]
-  obj=getobj(item)
-  ret+=x(system.and)+x(g.a)(obj)+innerobject(obj.id,obj.type,x(obj.name))
+  $obj=getobj(array[array.length-1])
+  ret+=x(w.and)+x(w.anobject)
   return ret
 }
 
 function changeEditable() {
   document.body.contentEditable = document.body.contentEditable=='true'?'false':'true'
-  if(document.body.contentEditable == 'false') {
-    var markup=document.documentElement.innerHTML
-    markup=markup.replaceAll(/{t (\w+)}/g,function(match,p1){return innerobject(p1,"thing",p1)})
-    markup=markup.replaceAll(/{s (\w+)}/g,function(match,p1){return innerobject(p1,"supporter",p1)})
-    markup=markup.replaceAll(/{c (\w+)}/g,function(match,p1){return innerobject(p1,"container",p1)})
-    document.documentElement.innerHTML=markup
-  }
 }
 
 function download(exportText){
@@ -271,7 +305,7 @@ function allowDrop(ev) {ev.preventDefault()}
 function drag(ev) {ev.dataTransfer.setData("text",ev.target.id)}
 function drop(ev) {
   ev.preventDefault()
-  var source = ev.dataTransfer.getData("text")
+  var source=ev.dataTransfer.getData("text")
   var drain = ev.target.id
   dragndrop(source,drain)
 }
@@ -280,79 +314,67 @@ function dragndrop(source, drain){
     var obj=getobj(source)
     var loc=obj.loc
     if(loc=='@carried'||loc=='@worn'){
-      msg(x(system.Nothingtodo))
+      msg(x(w.Nothingtodo))
       return
     }
     var org=getobj(loc)
     if(remove(org.objects,obj.id)){
       world.carried.push(obj.id)
       obj.loc='@carried'
-      msg(
-        x(system.Youtake)+
-        x(g.the)(obj)+
-        x(obj.name)+' '+
-        x(g.fromthe)(org)+
-        x(org.name)+'.')
+      $obj=obj
+      $obj2=org
+      msg(x(w.Youtake))
       refresh()
     }else{
-      msg(x(system.Cantdo))
+      msg(x(w.Cantdo))
     }
   }else{
     var dobj=getobj(drain)
     var sobj=getobj(source)
+    if(sobj==dobj){
+      msg(x(w.Cantdo))
+      return
+    }
     switch(dobj.type){
       default:
-        msg(x(system.Cantdo))
+        msg(x(w.Cantdo))
         break
       case 'room':
         if(sobj.loc=='@carried'){
           remove(world.carried,sobj.id)
           dobj.add(sobj)
-          msg(
-            x(system.Youdrop)+
-            x(g.the)(sobj)+
-            x(sobj.name)+' '+
-            x(g.inthe)(dobj)+
-            x(dobj.name)+'.')
+          $obj=sobj
+          $obj2=dobj
+          msg(x(w.Youdrop))
           refresh()
         }else{
           remove(getobj(sobj.loc).objects,sobj.id)
           dobj.add(sobj)
-          msg(
-            x(system.Youput)+
-            x(g.the)(sobj)+
-            x(sobj.name)+' '+
-            x(g.inthe)(dobj)+
-            x(dobj.name)+'.')
+          $obj=sobj
+          $obj2=dobj
+          msg(x(w.Youputin))
           refresh()
         }
         return
       case 'container':
         if(dobj.closed){
-          msg(x(system.Cantdo)+' '+
-            cap(x(g.the)(dobj))+x(dobj.name)+' '+
-            x(system.isclosed,dobj))
+          $obj=dobj
+          msg(x(w.Cantdo)+' '+x(w.Itsclosed))
           return
         }
         if(sobj.loc=='@carried'){
           remove(world.carried,sobj.id)
           dobj.objects.push[sobj.id]
-          msg(
-            x(system.Youput)+
-            x(g.the)(sobj)+
-            x(sobj.name)+' '+
-            x(g.inthe)(dobj)+
-            x(dobj.name)+'.')
+          $obj=sobj
+          $obj2=dobj
+          msg(x(w.Youputin))
           refresh()
         }else{
           remove(getobj(sobj.loc).objects,sobj.id)
           dobj.add(sobj)
-          msg(
-            x(system.Youput)+
-            x(g.the)(sobj)+
-            x(sobj.name)+' '+
-            x(g.inthe)(dobj)+
-            x(dobj.name)+'.')
+          $obj=sobj
+          $obj2=dobj
+          msg(x(w.Youputin))
           refresh()
         }
         return
@@ -360,28 +382,33 @@ function dragndrop(source, drain){
         if(sobj.loc=='@carried'){
           remove(world.carried,sobj.id)
           dobj.objects.push[sobj.id]
-          msg(
-            x(system.Youput)+
-            x(g.the)(sobj)+
-            x(sobj.name)+' '+
-            x(g.onthe)(dobj)+
-            x(dobj.name)+'.')
+          $obj=sobj
+          $obj2=dobj
+          msg(x(w.Youputon))
           refresh()
         }else{
           remove(getobj(sobj.loc).objects,sobj.id)
           dobj.add(sobj)
-          msg(
-            x(system.Youput)+
-            x(g.the)(sobj)+
-            x(sobj.name)+' '+
-            x(g.onthe)(dobj)+
-            x(dobj.name)+'.')
+          $obj=sobj
+          $obj2=dobj
+          msg(x(w.Youputon))
           refresh()
         }
         return
     }
     msg(source+" "+drain)
   }
+}
+function clickon(ev){
+  examine(ev.target.id)
+}
+
+function examine(id){
+  var obj=getobj(id)
+  var str=obj.desc?mark(x(obj.desc)):x(w.Nospecial)
+  if(obj.objects && obj.objects.length>0)
+    str+="<p>"+(obj.type=="supporter"?onyousee:inyousee)(obj)
+  msg(str)
 }
 
 function refreshRoom(){
@@ -394,14 +421,14 @@ function refreshRoom(){
   inner('$room',str)
 }
 function refreshInventory(){
-  var str='<h2 id="@inventory" draggable="false" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)">'+x(system.Inventory)+"</h2>"
+  var str='<h2 id="@inventory" draggable="false" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)">'+x(w.Inventory)+"</h2>"
   if(world.carried.length>0){
     str+="<p>"+youcarry()
     if(world.worn.length>0){
       str+="<p>"+youwear()
     }
   }else{
-    str+=x(system.Youcarrynothing)
+    str+=x(w.Youcarrynothing)
   }
   inner('$inventory',str)
 }
