@@ -20,8 +20,13 @@ t=new supporter('table')
 t.addname('it','tavolo')
 t=new container('box')
 t.addname('it','scatola')
-t.desc="A nice box."
-t.adddesc('it',"Una bella scatola.")
+t.desc="A nice {box}."
+t.adddesc('it',"Una bella {box}.")
 t.closed=false
 t.itfemale=true
+r.add(t)
+t=new actor('Pippo')
+t.desc="A handsome {Pippo}."
+t.adddesc('it',"Un bel {Pippo}.")
+t.proper=true
 r.add(t)

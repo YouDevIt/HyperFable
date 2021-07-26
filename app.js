@@ -10,38 +10,33 @@ function remove(array,item){
 
 const langdef='en'
 var langtag='en'
-function x(sentence){
-  var ret,lan
-  if(sentence instanceof String){
-    lan=langdef
-    ret=sentence
-  }else{
-    lan=langtag
+function x(sentence,obj1,obj2){
+  if(isString(sentence))
+    return sentence
+  var lan=langtag
+  var ret=sentence[lan]
+  if(!ret){
+    lan=langdef 
     ret=sentence[lan]
-    if(!ret){
-      lan=langdef 
-      ret=sentence[lan]
-    }
   }
-  return isString(ret)?decode(lan,ret):ret
+  return decode(lan,ret,obj1,obj2)
 }
-var $obj,$obj2
-function decode(lan,txt){
+function decode(lan,txt,obj1,obj2){
   txt=txt.replaceAll(/\[([^\]]+)\]/g,function(match,p1){
     switch(lan){
       case 'en':
-        return decodeen(p1)
+        return decodeen(p1,obj1,obj2)
       case 'it':
-        return decodeit(p1)
+        return decodeit(p1,obj1,obj2)
     }
     return p1
   })
   return txt
 }
-function decodeen(p1){
-  var o=$obj
+function decodeen(p1,obj1,obj2){
+  var o=obj1
   if(p1.charAt(p1.length-1)=='2'){
-    o=$obj2
+    o=obj2
     p1=p1.substring(0,p1.length-1)
   }
   switch(p1){
@@ -53,13 +48,15 @@ function decodeen(p1){
       return en.indart(o)+innerobject(o)
     case 'is':
       return o.enplural?'are':'is'
+    case 'a list of objects':
+      return listobjs(o)
   }
   return p1
 }
-function decodeit(p1){
-  var o=$obj
+function decodeit(p1,obj1,obj2){
+  var o=obj1
   if(p1.charAt(p1.length-1)=='2'){
-    o=$obj2
+    o=obj2
     p1=p1.substring(0,p1.length-1)
   }
   switch(p1){
@@ -79,7 +76,8 @@ function decodeit(p1){
       return "da"+it.artdet(o)+innerobject(o)
     case "un oggetto":
       return it.artind(o)+innerobject(o)
-      break
+    case "una lista di oggetti":
+      return listobjs(o)
     case 'è':
       return o.itplural?'sono':'è'
     case 'o':
@@ -95,17 +93,47 @@ w={
     it:"Ora la storia è in italiano.",
   },
   Nothingtodo:{en:"Nothing to do.",it:"Niente da fare."},
-  Cantdo:{en:"You can't do that. ",it:"Non puoi farlo. "},
-  Itsclosed:{en:"[The object] [is] closed.",it:"[L'oggetto] [è] chius[o]."},
+  Cantdo:{en:"You can't do that.",it:"Non puoi farlo."},
+  Cantmove:{
+    en:"You can't move [the object].",
+    it:"Non puoi spostare [l'oggetto]."
+  },
+  Itsclosed:{
+    en:"[The object] [is] closed.",
+    it:"[L'oggetto] [è] chius[o]."
+  },
   Nospecial:{
-    en:"You see nothing special.",
-    it:"Non noti nulla di speciale."},
+    en:"You see nothing special in [the object].",
+    it:"Non noti nulla di speciale [nell'oggetto]."},
   Inventory:{en:"Inventory",it:"Inventario"},
-  Yousee:{en:"Here you can see ",it:"Qui puoi vedere "},
-  Inyousee:{en:"In [the object] you see ",it:"[Nell'oggetto] vedi "},
-  Onyousee:{en:"On [the object] you see ",it:"[Sull'oggetto] vedi "},
-  Youcarry:{en:"You carry ",it:"Porti "},
-  Youwear:{en:"You wear ",it:"Indossi "},
+  Seeing:{
+    en:"Here you can see [a list of objects].",
+    it:"Qui puoi vedere [una lista di oggetti]."
+  },
+  Inseeing:{
+    en:"In [the object] you see [a list of objects2].",
+    it:"[Nell'oggetto] vedi [una lista di oggetti2]."
+  },
+  Onseeing:{
+    en:"On [the object] you see [a list of objects2].",
+    it:"[Sull'oggetto] vedi [una lista di oggetti2]."
+  },
+  Carring:{
+    en:"You carry [a list of objects].",
+    it:"Porti [una lista di oggetti].",
+  },
+  Wearing:{
+    en:"You wear [a list of objects].",
+    it:"Indossi [una lista di oggetti]."
+  },
+  Youwear:{
+    en:"You wear [the object].",
+    it:"Hai indossato [l'oggetto]."
+  },
+  Youremove:{
+    en:"You remove [the object].",
+    it:"Hai tolto [l'oggetto]."
+  },
   Youtake:{
     en:"You take [the object] from [the object2].",
     it:"Hai preso [l'oggetto] [dall'oggetto2]."
@@ -132,15 +160,16 @@ w={
 }
 var it={
   artdet:function(obj){
-    return (obj.itfemale?"la ":"il ")
+    return obj.proper?"":(obj.itfemale?"la ":"il ")
   },
   artind:function(obj){
-    return (obj.itfemale?"una ":"un ")
+    return obj.proper?"":(obj.itfemale?"una ":"un ")
   },
 }
 var en={
-  detart:function(obj){return obj.enproper?"":"the "},
+  detart:function(obj){return obj.proper?"":"the "},
   indart:function(obj){
+    if(obj.proper)return ""
     var first=x(obj.name).charAt(0)
     return ("aeiouAEIOU".indexOf(first)>=0)?"an ":"a "
   },
@@ -208,6 +237,7 @@ function actor(id){
 }
 function room(id){
   group.call(this,id,'room')
+  this.scenery=true
 }
 function exit(id){
   object.call(this,id,'exit')
@@ -218,15 +248,26 @@ function thing(id){
 }
 function container(id){
   group.call(this,id,'container')
+  this.enterable=false
   this.transparent=true
   this.locked=false
   this.closed=false
   this.keys=[]
 }
-function supporter(id){
-  group.call(this,id,'supporter')
+function vehicle(id){
+  container.call(this,id,'vehicle')
   this.enterable=true
 }
+function supporter(id){
+  group.call(this,id,'supporter')
+  this.scenery=true
+  this.enterable=true
+}
+function mount(id){
+  supporter.call(this,id,'mount')
+  this.scenery=false
+}
+
 function addobject(obj){world.add(obj)}
 function getobj(id){return world.objects[id]}
 function getroom(){return world.objects[world.loc]}
@@ -234,7 +275,14 @@ function getroom(){return world.objects[world.loc]}
 function getel(elname){return document.getElementById(elname);}
 
 function inner(elname,text){getel(elname).innerHTML=text}
-function msg(text){inner('$message',text)}
+var msgcount=0
+function msg(text){
+  msgcount++
+  getel("$msg").start=msgcount
+  for(var ct=5;ct>=2;ct--)
+    getel('$msg'+ct).innerHTML=getel('$msg'+(ct-1)).innerHTML
+  inner('$msg1',text)
+}
 
 function cap(txt){return txt.charAt(0).toUpperCase()+txt.slice(1)}
 
@@ -254,36 +302,30 @@ function mark(text){
 }
 
 function yousee(room){
-  return x(w.Yousee)+listobjs(room.objects)+"."
+  return x(w.Seeing,room.objects)
 }
 function inyousee(obj){
-  $obj=obj
-  return x(w.Inyousee)+listobjs(obj.objects)+"."
+  return x(w.Inseeing,obj,obj.objects)
 }
 function onyousee(obj){
-  $obj=obj
-  return x(w.Onyousee)+listobjs(obj.objects)+"."
+  return x(w.Onseeing,obj,obj.objects)
 }
 function youcarry(){
-  return x(w.Youcarry)+listobjs(world.carried)+"."
+  return x(w.Carring,world.carried)
 }
 function youwear(){
-  return x(w.Youwear)+listobjs(world.worn)+"."
+  return x(w.Wearing,world.worn)
 }
 
 function listobjs(array){
   if(array.length==0)
     return x(w.nothing)
-  $obj=getobj(array[0])
-  ret=x(w.anobject)
+  ret=x(w.anobject,getobj(array[0]))
   if(array.length==1)
     return ret
-  for(var ct=1;ct<array.length-1;ct++){
-    $obj=getobj(array[ct])
-    ret+=", "+x(w.anobject)
-  }
-  $obj=getobj(array[array.length-1])
-  ret+=x(w.and)+x(w.anobject)
+  for(var ct=1;ct<array.length-1;ct++)
+    ret+=", "+x(w.anobject,getobj(array[ct]))
+  ret+=x(w.and)+x(w.anobject,getobj(array[array.length-1]))
   return ret
 }
 
@@ -306,31 +348,48 @@ function drag(ev) {ev.dataTransfer.setData("text",ev.target.id)}
 function drop(ev) {
   ev.preventDefault()
   var source=ev.dataTransfer.getData("text")
-  var drain = ev.target.id
+  var drain=ev.target.id
   dragndrop(source,drain)
 }
-function dragndrop(source, drain){
+function dragndrop(source,drain){
+  var obj=getobj(source)
+  if(obj.scenery){
+    msg(x(w.Cantmove,obj))
+    return
+  }
   if(drain=='@inventory'){
-    var obj=getobj(source)
     var loc=obj.loc
-    if(loc=='@carried'||loc=='@worn'){
-      msg(x(w.Nothingtodo))
+    if(loc=='@carried'){
+      if(!obj.wearable){
+        msg(x(w.Nothingtodo))
+      }else{
+        remove(world.carried,obj.id)
+        world.worn.push(obj.id)
+        obj.loc='@worn'
+        msg(x(w.Youwear,obj))
+        refresh()
+      }
+      return
+    }else if(loc=='@worn'){
+      remove(world.worn,obj.id)
+      world.carried.push(obj.id)
+      obj.loc='@carried'
+      msg(x(w.Youremove,obj))
+      refresh()
       return
     }
     var org=getobj(loc)
     if(remove(org.objects,obj.id)){
       world.carried.push(obj.id)
       obj.loc='@carried'
-      $obj=obj
-      $obj2=org
-      msg(x(w.Youtake))
+      msg(x(w.Youtake,obj,org))
       refresh()
     }else{
       msg(x(w.Cantdo))
     }
   }else{
     var dobj=getobj(drain)
-    var sobj=getobj(source)
+    var sobj=obj
     if(sobj==dobj){
       msg(x(w.Cantdo))
       return
@@ -343,55 +402,60 @@ function dragndrop(source, drain){
         if(sobj.loc=='@carried'){
           remove(world.carried,sobj.id)
           dobj.add(sobj)
-          $obj=sobj
-          $obj2=dobj
-          msg(x(w.Youdrop))
+          msg(x(w.Youdrop,sobj,dobj))
+          refresh()
+        }else if(sobj.loc=='@worn'){
+          remove(world.worn,sobj.id)
+          dobj.add(sobj)
+          msg(x(w.Youremove,sobj))
+          msg(x(w.Youdrop,sobj,dobj))
           refresh()
         }else{
           remove(getobj(sobj.loc).objects,sobj.id)
           dobj.add(sobj)
-          $obj=sobj
-          $obj2=dobj
-          msg(x(w.Youputin))
+          msg(x(w.Youputin,sobj,dobj))
           refresh()
         }
         return
       case 'container':
         if(dobj.closed){
-          $obj=dobj
-          msg(x(w.Cantdo)+' '+x(w.Itsclosed))
+          msg(x(w.Cantdo)+' '+x(w.Itsclosed,dobj))
           return
         }
         if(sobj.loc=='@carried'){
           remove(world.carried,sobj.id)
-          dobj.objects.push[sobj.id]
-          $obj=sobj
-          $obj2=dobj
-          msg(x(w.Youputin))
+          dobj.add(sobj)
+          msg(x(w.Youputin,sobj,dobj))
+          refresh()
+        }else if(sobj.loc=='@worn'){
+          remove(world.worn,sobj.id)
+          dobj.add(sobj)
+          msg(x(w.Youremove,sobj))
+          msg(x(w.Youputin,sobj,dobj))
           refresh()
         }else{
           remove(getobj(sobj.loc).objects,sobj.id)
           dobj.add(sobj)
-          $obj=sobj
-          $obj2=dobj
-          msg(x(w.Youputin))
+          msg(x(w.Youputin,sobj,dobj))
           refresh()
         }
         return
       case 'supporter':
         if(sobj.loc=='@carried'){
           remove(world.carried,sobj.id)
-          dobj.objects.push[sobj.id]
-          $obj=sobj
-          $obj2=dobj
-          msg(x(w.Youputon))
+          dobj.add(sobj)
+          msg(x(w.Youputon,sobj,dobj))
+          refresh()
+        }else if(sobj.loc=='@worn'){
+          remove(world.worn,sobj.id)
+          dobj.add(sobj)
+          msg(x(w.Youremove,sobj))
+          msg(x(w.Youputon,sobj,dobj))
           refresh()
         }else{
           remove(getobj(sobj.loc).objects,sobj.id)
           dobj.add(sobj)
-          $obj=sobj
-          $obj2=dobj
-          msg(x(w.Youputon))
+          msg(x(w.Youputon,sobj,dobj))
           refresh()
         }
         return
@@ -405,9 +469,9 @@ function clickon(ev){
 
 function examine(id){
   var obj=getobj(id)
-  var str=obj.desc?mark(x(obj.desc)):x(w.Nospecial)
+  var str=mark(x(obj.desc?obj.desc:w.Nospecial,obj))
   if(obj.objects && obj.objects.length>0)
-    str+="<p>"+(obj.type=="supporter"?onyousee:inyousee)(obj)
+    str+="<br>"+(obj.type=="supporter"?onyousee:inyousee)(obj)
   msg(str)
 }
 
@@ -422,14 +486,12 @@ function refreshRoom(){
 }
 function refreshInventory(){
   var str='<h2 id="@inventory" draggable="false" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)">'+x(w.Inventory)+"</h2>"
-  if(world.carried.length>0){
+  if(world.carried.length>0)
     str+="<p>"+youcarry()
-    if(world.worn.length>0){
-      str+="<p>"+youwear()
-    }
-  }else{
+  else
     str+=x(w.Youcarrynothing)
-  }
+  if(world.worn.length>0)
+    str+="<p>"+youwear()
   inner('$inventory',str)
 }
 function refresh(){
