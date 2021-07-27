@@ -13,10 +13,20 @@ body{
   width:32px;
 }
 
-.room{
+.action{
+  border: dotted #666;
   font-weight: bold;
-  color: #000;
+  color: black;
+  padding: 4px;
   cursor: move;
+}
+.room{
+  font-weight:bold;
+  color:#808;
+}
+.exit{
+  font-weight:bold;
+  color:#800;
 }
 .thing{
   border: 2px solid #666;
@@ -45,7 +55,7 @@ body{
   padding: 4px;
   cursor: move;
 }
-.actor,.vehicle,.mount,.exit{
+.actor,.vehicle,.mount{
   border: 2px dashed #666;
   background-color: red;
   font-weight: bolder;

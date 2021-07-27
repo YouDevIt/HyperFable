@@ -2,10 +2,12 @@
 function isString(s) {
   return typeof(s)==='string'||s instanceof String
 }
-function remove(array,item){
-  const idx=array.indexOf(item)
-  if(idx>=0){array.splice(idx,1);return true}
-  return false
+function remove(array,id){
+  const idx=array.indexOf(id)
+  if(idx<0)
+    return false
+  array.splice(idx,1)
+  return true
 }
 
 const langdef='en'
@@ -28,16 +30,17 @@ function decode(lan,txt,obj1,obj2){
         return decodeen(p1,obj1,obj2)
       case 'it':
         return decodeit(p1,obj1,obj2)
+      default:
+        return p1
     }
-    return p1
   })
   return txt
 }
 function decodeen(p1,obj1,obj2){
   var o=obj1
   if(p1.charAt(p1.length-1)=='2'){
-    o=obj2
     p1=p1.substring(0,p1.length-1)
+    o=obj2
   }
   switch(p1){
     case 'The object':
@@ -46,18 +49,23 @@ function decodeen(p1,obj1,obj2){
       return en.detart(o)+innerobject(o)
     case 'an object':
       return en.indart(o)+innerobject(o)
+    case 'object':
+      return innerobject(o)
     case 'is':
       return o.enplural?'are':'is'
     case 'a list of objects':
+      return anlistobjs(o)
+    case 'list of objects':
       return listobjs(o)
+    default:
+      return p1
   }
-  return p1
 }
 function decodeit(p1,obj1,obj2){
   var o=obj1
   if(p1.charAt(p1.length-1)=='2'){
-    o=obj2
     p1=p1.substring(0,p1.length-1)
+    o=obj2
   }
   switch(p1){
     case "L'oggetto":
@@ -76,7 +84,11 @@ function decodeit(p1,obj1,obj2){
       return "da"+it.artdet(o)+innerobject(o)
     case "un oggetto":
       return it.artind(o)+innerobject(o)
+    case "oggetto":
+      return innerobject(o)
     case "una lista di oggetti":
+      return anlistobjs(o)
+    case "lista di oggetti":
       return listobjs(o)
     case 'è':
       return o.itplural?'sono':'è'
@@ -84,19 +96,32 @@ function decodeit(p1,obj1,obj2){
       return o.itfemale?
         (o.itplural?'e':'a'):
         (o.itplural?'o':'i')
+    default:
+      return p1
   }
-  return p1
 }
-w={
+var w={
   Langchanged:{
     en:"Now the story is in English.",
     it:"Ora la storia è in italiano.",
   },
   Nothingtodo:{en:"Nothing to do.",it:"Niente da fare."},
   Cantdo:{en:"You can't do that.",it:"Non puoi farlo."},
+  Cantsee:{
+    en:"Here you can't see [the object].",
+    it:"Qui non vedi [l'oggetto]."
+  },
+  Cantseeexit:{
+    en:"Here You can't see the exit [object].",
+    it:"Qui non vedi l'uscita [oggetto]."
+  },
   Cantmove:{
     en:"You can't move [the object].",
     it:"Non puoi spostare [l'oggetto]."
+  },
+  Cantwear:{
+    en:"You can't wear [the object].",
+    it:"Non puoi indossare [l'oggetto]."
   },
   Itsclosed:{
     en:"[The object] [is] closed.",
@@ -106,9 +131,17 @@ w={
     en:"You see nothing special in [the object].",
     it:"Non noti nulla di speciale [nell'oggetto]."},
   Inventory:{en:"Inventory",it:"Inventario"},
+  Yougoto:{
+    en:"You go to [the object].",
+    it:"Vai verso [l'oggetto]."
+  },
   Seeing:{
     en:"Here you can see [a list of objects].",
     it:"Qui puoi vedere [una lista di oggetti]."
+  },
+  Exits:{
+    en:"Visible exits: [list of objects].",
+    it:"Uscite visibili: [lista di oggetti]."
   },
   Inseeing:{
     en:"In [the object] you see [a list of objects2].",
@@ -150,9 +183,14 @@ w={
     en:"You drop [the object] in [the object2].",
     it:"Hai lasciato [l'oggetto] [nell'oggetto2].",
   },
-  Youcarrynothing:{en:"You carry nothing.",it:"Non porti nulla."},
+  Youcarrynothing:{
+    en:"You carry nothing.",
+    it:"Non porti nulla."
+  },
   nothing:{en:"nothing",it:"nulla"},
+  none:{en:"none",it:"nessuna"},
   anobject:{en:"[an object]",it:"[un oggetto]"},
+  object:{en:"[object]",it:"[oggetto]"},
   and:{en:" and ",it:" e "},
   SAVE:{en:"SAVE",it:"SALVA"},
   RESTART:{en:"RESTART",it:"RICOMINCIA"},
@@ -169,7 +207,7 @@ var it={
 var en={
   detart:function(obj){return obj.proper?"":"the "},
   indart:function(obj){
-    if(obj.proper)return ""
+    if(obj.proper) return ""
     var first=x(obj.name).charAt(0)
     return ("aeiouAEIOU".indexOf(first)>=0)?"an ":"a "
   },
@@ -238,6 +276,11 @@ function actor(id){
 function room(id){
   group.call(this,id,'room')
   this.scenery=true
+  this.exits=[]
+  this.addexit=function(obj){
+    this.exits.push(obj.id)
+    obj.loc=this.id
+  }
 }
 function exit(id){
   object.call(this,id,'exit')
@@ -245,9 +288,11 @@ function exit(id){
 }
 function thing(id){
   object.call(this,id,'thing')
+  this.movable=true
 }
 function container(id){
   group.call(this,id,'container')
+  this.movable=true
   this.enterable=false
   this.transparent=true
   this.locked=false
@@ -275,22 +320,26 @@ function getroom(){return world.objects[world.loc]}
 function getel(elname){return document.getElementById(elname);}
 
 function inner(elname,text){getel(elname).innerHTML=text}
+const msgtot=9
 var msgcount=0
 function msg(text){
   msgcount++
   getel("$msg").start=msgcount
-  for(var ct=5;ct>=2;ct--)
+  for(var ct=msgtot;ct>=1;ct--)
     getel('$msg'+ct).innerHTML=getel('$msg'+(ct-1)).innerHTML
-  inner('$msg1',text)
+  inner('$msg0',text)
 }
 
 function cap(txt){return txt.charAt(0).toUpperCase()+txt.slice(1)}
 
 function innerobject(obj) {
   var id=obj.id
-  var type= obj.type
+  var type=obj.type
   var name=x(obj.name)
-  return '<span class="'+type+'" id="'+id+'" draggable="true" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)" onclick="clickon(event)">'+name+'</span>';
+  return innerclass(id,type,name)
+}
+function innerclass(id,type,name){
+  return '<span class="'+type+'" id="'+id+'" draggable="true" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)" onclick="clickon(event)">'+name+'</span>'
 }
 
 function mark(text){
@@ -303,6 +352,9 @@ function mark(text){
 
 function yousee(room){
   return x(w.Seeing,room.objects)
+}
+function listexits(room){
+  return x(w.Exits,room.exits)
 }
 function inyousee(obj){
   return x(w.Inseeing,obj,obj.objects)
@@ -318,6 +370,17 @@ function youwear(){
 }
 
 function listobjs(array){
+  if(array.length==0)
+    return x(w.none)
+  ret=x(w.object,getobj(array[0]))
+  if(array.length==1)
+    return ret
+  for(var ct=1;ct<array.length-1;ct++)
+    ret+=", "+x(w.object,getobj(array[ct]))
+  ret+=x(w.and)+x(w.object,getobj(array[array.length-1]))
+  return ret
+}
+function anlistobjs(array){
   if(array.length==0)
     return x(w.nothing)
   ret=x(w.anobject,getobj(array[0]))
@@ -351,127 +414,153 @@ function drop(ev) {
   var drain=ev.target.id
   dragndrop(source,drain)
 }
-function dragndrop(source,drain){
-  var obj=getobj(source)
-  if(obj.scenery){
-    msg(x(w.Cantmove,obj))
-    return
+
+function isvisible(obj){
+  if(obj.id==world.loc)
+    return true
+  var loc=obj.loc
+  while(true){
+    if(loc=='@carried'||loc=='@worn'||loc==world.loc)
+      return true
+    var oloc=getobj(loc)
+    if(oloc.type=='room')
+      return false
+    if(oloc.type=='supporter'||oloc.type=='mount')
+      loc=oloc.loc
+    else if(oloc.type=='container'||oloc.type=='vehicle'){
+      if(!oloc.transparent&&oloc.closed)
+        return false
+      loc=oloc.loc
+    }else
+      return false
   }
-  if(drain=='@inventory'){
-    var loc=obj.loc
-    if(loc=='@carried'){
-      if(!obj.wearable){
-        msg(x(w.Nothingtodo))
-      }else{
-        remove(world.carried,obj.id)
-        world.worn.push(obj.id)
-        obj.loc='@worn'
-        msg(x(w.Youwear,obj))
-        refresh()
-      }
-      return
-    }else if(loc=='@worn'){
-      remove(world.worn,obj.id)
-      world.carried.push(obj.id)
-      obj.loc='@carried'
-      msg(x(w.Youremove,obj))
-      refresh()
-      return
-    }
-    var org=getobj(loc)
-    if(remove(org.objects,obj.id)){
-      world.carried.push(obj.id)
-      obj.loc='@carried'
-      msg(x(w.Youtake,obj,org))
-      refresh()
-    }else{
-      msg(x(w.Cantdo))
-    }
-  }else{
-    var dobj=getobj(drain)
-    var sobj=obj
-    if(sobj==dobj){
-      msg(x(w.Cantdo))
-      return
-    }
-    switch(dobj.type){
-      default:
-        msg(x(w.Cantdo))
-        break
-      case 'room':
-        if(sobj.loc=='@carried'){
-          remove(world.carried,sobj.id)
-          dobj.add(sobj)
-          msg(x(w.Youdrop,sobj,dobj))
-          refresh()
-        }else if(sobj.loc=='@worn'){
-          remove(world.worn,sobj.id)
-          dobj.add(sobj)
-          msg(x(w.Youremove,sobj))
-          msg(x(w.Youdrop,sobj,dobj))
-          refresh()
-        }else{
-          remove(getobj(sobj.loc).objects,sobj.id)
-          dobj.add(sobj)
-          msg(x(w.Youputin,sobj,dobj))
-          refresh()
-        }
-        return
-      case 'container':
-        if(dobj.closed){
-          msg(x(w.Cantdo)+' '+x(w.Itsclosed,dobj))
-          return
-        }
-        if(sobj.loc=='@carried'){
-          remove(world.carried,sobj.id)
-          dobj.add(sobj)
-          msg(x(w.Youputin,sobj,dobj))
-          refresh()
-        }else if(sobj.loc=='@worn'){
-          remove(world.worn,sobj.id)
-          dobj.add(sobj)
-          msg(x(w.Youremove,sobj))
-          msg(x(w.Youputin,sobj,dobj))
-          refresh()
-        }else{
-          remove(getobj(sobj.loc).objects,sobj.id)
-          dobj.add(sobj)
-          msg(x(w.Youputin,sobj,dobj))
-          refresh()
-        }
-        return
-      case 'supporter':
-        if(sobj.loc=='@carried'){
-          remove(world.carried,sobj.id)
-          dobj.add(sobj)
-          msg(x(w.Youputon,sobj,dobj))
-          refresh()
-        }else if(sobj.loc=='@worn'){
-          remove(world.worn,sobj.id)
-          dobj.add(sobj)
-          msg(x(w.Youremove,sobj))
-          msg(x(w.Youputon,sobj,dobj))
-          refresh()
-        }else{
-          remove(getobj(sobj.loc).objects,sobj.id)
-          dobj.add(sobj)
-          msg(x(w.Youputon,sobj,dobj))
-          refresh()
-        }
-        return
-    }
-    msg(source+" "+drain)
-  }
-}
-function clickon(ev){
-  examine(ev.target.id)
 }
 
-function examine(id){
-  var obj=getobj(id)
+function dragndrop(source,drain){
+  var sobj=getobj(source)
+  if(!isvisible(sobj))
+    return msg(x(w.Cantsee,sobj))
+  if(sobj.scenery||!sobj.movable)
+    return msg(x(w.Cantmove,sobj))
+  if(drain=='@inventory'){
+    var loc=sobj.loc
+    if(loc=='@carried'){
+      if(!sobj.wearable)
+        return msg(x(w.Cantwear,sobj))
+      remove(world.carried,sobj.id)
+      world.worn.push(sobj.id)
+      sobj.loc='@worn'
+      msg(x(w.Youwear,sobj))
+      return refresh()
+    }
+    if(loc=='@worn'){
+      remove(world.worn,sobj.id)
+      world.carried.push(sobj.id)
+      sobj.loc='@carried'
+      msg(x(w.Youremove,sobj))
+      return refresh()
+    }
+    var org=getobj(loc)
+    remove(org.objects,sobj.id)
+    world.carried.push(sobj.id)
+    sobj.loc='@carried'
+    msg(x(w.Youtake,sobj,org))
+    return refresh()
+  }
+  var dobj=getobj(drain)
+  if(!isvisible(dobj))
+    return msg(x(w.Cantsee,dobj))
+  if(sobj==dobj)
+    return msg(x(w.Cantdo))
+  switch(dobj.type){
+    case 'room':
+      if(sobj.loc=='@carried'){
+        remove(world.carried,sobj.id)
+        dobj.add(sobj)
+        msg(x(w.Youdrop,sobj,dobj))
+        return refresh()
+      }
+      if(sobj.loc=='@worn'){
+        remove(world.worn,sobj.id)
+        dobj.add(sobj)
+        msg(x(w.Youremove,sobj))
+        msg(x(w.Youdrop,sobj,dobj))
+        return refresh()
+      }
+      var sloc=getobj(sobj.loc)
+      remove(sloc.objects,sobj.id)
+      dobj.add(sobj)
+      msg(x(w.Youtake,sobj,sloc))
+      msg(x(w.Youputin,sobj,dobj))
+      return refresh()
+    case 'container':
+      if(dobj.closed)
+        return msg(x(w.Cantdo)+' '+x(w.Itsclosed,dobj))
+      if(sobj.loc=='@carried'){
+        remove(world.carried,sobj.id)
+        dobj.add(sobj)
+        msg(x(w.Youputin,sobj,dobj))
+        return refresh()
+      }
+      if(sobj.loc=='@worn'){
+        remove(world.worn,sobj.id)
+        dobj.add(sobj)
+        msg(x(w.Youremove,sobj))
+        msg(x(w.Youputin,sobj,dobj))
+        return refresh()
+      }
+      var sloc=getobj(sobj.loc)
+      remove(sloc.objects,sobj.id)
+      dobj.add(sobj)
+      msg(x(w.Youtake,sobj,sloc))
+      msg(x(w.Youputin,sobj,dobj))
+      return refresh()
+    case 'supporter':
+      if(sobj.loc=='@carried'){
+        remove(world.carried,sobj.id)
+        dobj.add(sobj)
+        msg(x(w.Youputon,sobj,dobj))
+        return refresh()
+      }
+      if(sobj.loc=='@worn'){
+        remove(world.worn,sobj.id)
+        dobj.add(sobj)
+        msg(x(w.Youremove,sobj))
+        msg(x(w.Youputon,sobj,dobj))
+        return refresh()
+      }
+      var sloc=getobj(sobj.loc)
+      remove(sloc.objects,sobj.id)
+      dobj.add(sobj)
+      msg(x(w.Youtake,sobj,sloc))
+      msg(x(w.Youputon,sobj,dobj))
+      return refresh()
+    default:
+      return msg(x(w.Cantdo))
+  }
+}
+
+function clickon(ev){
+  var obj=getobj(ev.target.id)
+  obj.type=='exit'?gothrough(obj):examine(obj)
+}
+function gothrough(obj){
+  if(!isvisible(obj))
+    return msg(x(w.Cantseeexit,obj))
+  world.loc=obj.roomto
+  var room=getobj(world.loc)
+  msg(x(w.Yougoto,room))
+  refresh()
+}
+function examine(obj){
+  if(!isvisible(obj))
+    return msg(x(w.Cantsee,obj))
   var str=mark(x(obj.desc?obj.desc:w.Nospecial,obj))
   if(obj.objects && obj.objects.length>0)
-    str+="<br>"+(obj.type=="supporter"?onyousee:inyousee)(obj)
+    str+="<br>"+(
+      obj.type=="supporter"||obj.type=="mount"?
+      onyousee:inyousee
+    )(obj)
   msg(str)
 }
 
@@ -482,6 +571,7 @@ function refreshRoom(){
     +mark(x(room.desc))
   if(room.objects.length>0)
     str+="<p>"+yousee(room)
+  str+="<p>"+listexits(room)
   inner('$room',str)
 }
 function refreshInventory(){
@@ -499,4 +589,11 @@ function refresh(){
   refreshInventory()
 }
 
-window.onload=function(){refresh()}
+window.onload=function(){
+  for(var ct=1;ct<=9;ct++){
+    var el=document.createElement("li")
+    el.id="$msg"+ct
+    getel("$msg").appendChild(el)
+  }
+  refresh()
+}
