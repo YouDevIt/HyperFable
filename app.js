@@ -57,6 +57,10 @@ function decodeen(p1,obj1,obj2){
       return anlistobjs(o)
     case 'list of objects':
       return listobjs(o)
+    case "list of actions":
+      return listactions(obj1,obj2)
+    case 'it':
+      return o.enplural?'them':o.enmale?'him':o.enfemale?'her':'it'
     default:
       return p1
   }
@@ -90,12 +94,14 @@ function decodeit(p1,obj1,obj2){
       return anlistobjs(o)
     case "lista di oggetti":
       return listobjs(o)
+    case "lista di azioni":
+      return listactions(obj1,obj2)
     case 'è':
       return o.itplural?'sono':'è'
     case 'o':
       return o.itfemale?
         (o.itplural?'e':'a'):
-        (o.itplural?'o':'i')
+        (o.itplural?'i':'o')
     default:
       return p1
   }
@@ -107,6 +113,7 @@ var w={
   },
   by:{en:"by ",it:"di "},
   Nothingtodo:{en:"Nothing to do.",it:"Niente da fare."},
+  Youcando:{en:"(You can [list of actions])",it:"(Puoi [lista di azioni])"},
   Cantdo:{en:"You can't do that.",it:"Non puoi farlo."},
   Cantsee:{
     en:"Here you can't see [the object].",
@@ -116,13 +123,21 @@ var w={
     en:"Here you can't see the exit [object].",
     it:"Qui non vedi l'uscita [oggetto]."
   },
-  Cantmove:{
-    en:"You can't move [the object].",
-    it:"Non puoi spostare [l'oggetto]."
+  Canttake:{
+    en:"You can't take [the object].",
+    it:"Non puoi prendere [l'oggetto]."
+  },
+  Alreadyhold:{
+    en:"You already hold [the object].",
+    it:"Porti già [l'oggetto]."
   },
   Cantwear:{
     en:"You can't wear [the object].",
     it:"Non puoi indossare [l'oggetto]."
+  },
+  Alreadywear:{
+    en:"You already wear [the object].",
+    it:"Indossi già [l'oggetto]."
   },
   Itsclosed:{
     en:"[The object] [is] closed.",
@@ -192,15 +207,16 @@ var w={
   none:{en:"none",it:"nessuna"},
   anobject:{en:"[an object]",it:"[un oggetto]"},
   object:{en:"[object]",it:"[oggetto]"},
-  and:{en:" and ",it:" e "},
+  and:{en:", and ",it:" e "},
+  or:{en:", or ",it:" o "},
   SAVE:{en:"SAVE",it:"SALVA"},
   RESTART:{en:"RESTART",it:"RICOMINCIA"},
   RESTORE:{en:"RESTORE",it:"RIPRISTINA"},
-  take:{en:"take",it:"prendi"},
-  drop:{en:"drop",it:"lascia"},
-  wear:{en:"wear",it:"indossa"},
-  remove:{en:"remove",it:"togli"},
-  open:{en:"open",it:"apri"},
+  take:{en:"take [it]",it:"prenderl[o]"},
+  drop:{en:"drop [it]",it:"lasciarl[o]"},
+  wear:{en:"wear [it]",it:"indossarl[o]"},
+  remove:{en:"remove [it]",it:"toglierl[o]"},
+  open:{en:"open [it]",it:"aprirl[o]"},
   Youopen:{
     en:"You open [the object].",
     it:"Hai aperto [l'oggetto]."
@@ -217,7 +233,7 @@ var w={
     en:"You can't open [the object] without a key.",
     it:"Non puoi aprire [l'oggetto] senza una chiave."
   },
-  close:{en:"close",it:"chiudi"},
+  close:{en:"close [it]",it:"chiuderl[o]"},
   Youclose:{
     en:"You close [the object].",
     it:"Hai aperto [l'oggetto]."
@@ -236,7 +252,7 @@ var w={
   e:{en:"east",it:"est"},
   u:{en:"up",it:"su"},
   d:{en:"down",it:"giù"},
-  enter:{en:"enter",it:"entra"},
+  enter:{en:"enter [it]",it:"entrarci"},
   Youenter:{
     en:"You enter in [the object].",
     it:"Sei entrato [nell'oggetto]."
@@ -245,7 +261,7 @@ var w={
     en:"You can't enter in [the object].",
     it:"Non puoi entrare [nell'oggetto]."
   },
-  exit:{en:"exit",it:"esci"},
+  exit:{en:"exit [it]",it:"uscirne"},
   Youexit:{
     en:"You exit [the object].",
     it:"Sei usciti [dall'oggetto]."
@@ -254,7 +270,7 @@ var w={
     en:"You can't exit [the object].",
     it:"Non puoi uscire [dall'oggetto]."
   },
-  sit:{en:"sit",it:"siediti"},
+  sit:{en:"sit on [it]",it:"sedertici sopra"},
   Yousit:{
     en:"You sit on [the object].",
     it:"Ti sei seduto [sull'oggetto]."
@@ -263,7 +279,7 @@ var w={
     en:"You can't sit on [the object].",
     it:"Non puoi sederti [sull'oggetto]."
   },
-  getoff:{en:"get off",it:"scendi"},
+  getoff:{en:"get off [it]",it:"scenderne"},
   Yougetoff:{
     en:"You get off [the object].",
     it:"Sei sceso [dall'oggetto]."
@@ -272,7 +288,7 @@ var w={
     en:"You can't get off [the object].",
     it:"Non puoi scendere [dall'oggetto]."
   },
-  climb:{en:"climb",it:"sali"},
+  climb:{en:"climb [it]",it:"salirci"},
   Youclimb:{
     en:"You climb [the object].",
     it:"Sei salito [sull'oggetto]."
@@ -281,7 +297,7 @@ var w={
     en:"You can't get on [the object].",
     it:"Non puoi salire [sull'oggetto]."
   },
-  descend:{en:"descend",it:"scendi"},
+  descend:{en:"descend [it]",it:"scenderne"},
   Youdescend:{
     en:"You descend [the object].",
     it:"Sei sceso [dall'oggetto]."
@@ -448,8 +464,8 @@ function innerobject(obj) {
 function innerclass(id,type,name){
   return '<span class="'+type+'" id="'+id+'" draggable="true" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)" onclick="clickon(event)">'+name+'</span>'
 }
-function inneraction(id,obj){
-  return '<span class="action" id="'+id+' '+obj.id+'" draggable="true" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)" onclick="clickon(event)">('+x(w[id])+')</span>'
+function inneraction(actionid,obj){
+  return '<span class="action" id="'+actionid+' '+obj.id+'" draggable="true" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)" onclick="clickon(event)">'+x(w[actionid],obj)+'</span>'
 }
 
 function mark(text){
@@ -496,6 +512,17 @@ function listobjs(array){
   ret+=x(w.and)+x(w.object,getobj(array[array.length-1]))
   return ret
 }
+function listactions(array,obj){
+  if(array.length==0)
+    return x(w.nothing)
+  ret=inneraction(array[0],obj)
+  if(array.length==1)
+    return ret
+  for(var ct=1;ct<array.length-1;ct++)
+    ret+=", "+inneraction(array[ct],obj)
+  ret+=x(w.or)+inneraction(array[array.length-1],obj)
+  return ret
+}
 function anlistobjs(array){
   if(array.length==0)
     return x(w.nothing)
@@ -523,11 +550,23 @@ function download(exportText){
 }
 
 function allowDrop(ev) {ev.preventDefault()}
-function drag(ev) {ev.dataTransfer.setData("text",ev.target.id)}
+function drag(ev) {
+  var id=ev.target.id
+  if(ev.target.className=="action")
+    id="*"+id.split(" ")[0]
+  ev.dataTransfer.setData("text",id)
+}
 function drop(ev) {
   ev.preventDefault()
   var source=ev.dataTransfer.getData("text")
   var drain=ev.target.id
+  if(source.charAt(0)=="*"){
+    if(ev.target.className=="action")
+      return msg(x(w.Cantdo))
+    return perform(source.substring(1),drain)
+  }
+  if(ev.target.className=="action")
+    return perform(drain.split(" ")[0],source)
   dragndrop(source,drain)
 }
 
@@ -557,7 +596,7 @@ function dragndrop(source,drain){
   if(!isvisible(sobj))
     return msg(x(w.Cantsee,sobj))
   if(sobj.scenery||!sobj.movable)
-    return msg(x(w.Cantmove,sobj))
+    return msg(x(w.Canttake,sobj))
   if(drain=='@inventory'){
     var loc=sobj.loc
     if(loc=='@carried'){
@@ -581,6 +620,50 @@ function dragndrop(source,drain){
     world.carried.push(sobj.id)
     sobj.loc='@carried'
     msg(x(w.Youtake,sobj,org))
+    return showAll()
+  }
+  if(drain=='@carried'){
+    var loc=sobj.loc
+    if(loc=='@carried')
+      return msg(x(w.Alreadyhold,sobj))
+    if(loc=='@worn'){
+      remove(world.worn,sobj.id)
+      world.carried.push(sobj.id)
+      sobj.loc='@carried'
+      msg(x(w.Youremove,sobj))
+      return showAll()
+    }
+    var org=getobj(loc)
+    remove(org.objects,sobj.id)
+    world.carried.push(sobj.id)
+    sobj.loc='@carried'
+    msg(x(w.Youtake,sobj,org))
+    return showAll()
+  }
+  if(drain=='@worn'){
+    var loc=sobj.loc
+    if(loc=='@carried'){
+      if(!sobj.wearable)
+        return msg(x(w.Cantwear,sobj))
+      remove(world.carried,sobj.id)
+      world.worn.push(sobj.id)
+      sobj.loc='@worn'
+      msg(x(w.Youwear,sobj))
+      return showAll()
+    }
+    if(loc=='@worn')
+      return msg(x(w.Alreadywear,sobj))
+    var org=getobj(loc)
+    remove(org.objects,sobj.id)
+    world.carried.push(sobj.id)
+    sobj.loc='@carried'
+    msg(x(w.Youtake,sobj,org))
+    if(!sobj.wearable)
+      return msg(x(w.Cantwear,sobj))
+    remove(world.carried,sobj.id)
+    world.worn.push(sobj.id)
+    sobj.loc='@worn'
+    msg(x(w.Youwear,sobj))
     return showAll()
   }
   var dobj=getobj(drain)
@@ -672,32 +755,46 @@ function clickon(ev){
 function gothrough(obj){
   if(!isvisible(obj))
     return msg(x(w.Cantseeexit,obj))
+  var oldloc=world.loc
   world.loc=obj.roomto
   var room=getobj(world.loc)
-  msg(x(w.Yougoto,room))
+  if(oldloc.charAt(0)!="@")
+    msg(x(w.Yougoto,room))
   showAll()
 }
 function perform(action,id,id2){
   switch(action){
     case 'take':
-      return dragndrop(id,'@inventory')
+      return dragndrop(id,'@carried')
+    case 'wear':
+      return dragndrop(id,'@worn')
   }
 }
 function examine(obj){
   if(!isvisible(obj))
     return msg(x(w.Cantsee,obj))
   var str=mark(x(obj.desc?obj.desc:w.Nospecial,obj))
-  switch(obj.type){
-    case "thing":
-      if(!obj.scenery&&obj.loc!="@carried") str+=" "+inneraction('take',obj)
-      break
-  }
+  str+=suggestactions(obj)
   if(obj.objects&&obj.objects.length>0)
     str+="<br>"+(
       obj.type=="supporter"||obj.type=="mount"?
       onyousee:inyousee
     )(obj)
   msg(str)
+}
+function suggestactions(obj){
+  var actions=[]
+  switch(obj.type){
+    case "thing":
+      if(!obj.scenery){
+        if(obj.loc!="@carried")
+          actions.push('take')
+        else if(obj.wearable)
+          actions.push('wear')
+      }
+      break
+  }
+  return actions.length>0?"<br>"+x(w.Youcando,actions,obj):""
 }
 
 function showRoom(){
