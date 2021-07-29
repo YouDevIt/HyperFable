@@ -105,6 +105,7 @@ var w={
     en:"Now the story is in English.",
     it:"Ora la storia è in italiano.",
   },
+  by:{en:"by ",it:"di "},
   Nothingtodo:{en:"Nothing to do.",it:"Niente da fare."},
   Cantdo:{en:"You can't do that.",it:"Non puoi farlo."},
   Cantsee:{
@@ -112,7 +113,7 @@ var w={
     it:"Qui non vedi [l'oggetto]."
   },
   Cantseeexit:{
-    en:"Here You can't see the exit [object].",
+    en:"Here you can't see the exit [object].",
     it:"Qui non vedi l'uscita [oggetto]."
   },
   Cantmove:{
@@ -195,6 +196,100 @@ var w={
   SAVE:{en:"SAVE",it:"SALVA"},
   RESTART:{en:"RESTART",it:"RICOMINCIA"},
   RESTORE:{en:"RESTORE",it:"RIPRISTINA"},
+  take:{en:"take",it:"prendi"},
+  drop:{en:"drop",it:"lascia"},
+  wear:{en:"wear",it:"indossa"},
+  remove:{en:"remove",it:"togli"},
+  open:{en:"open",it:"apri"},
+  Youopen:{
+    en:"You open [the object].",
+    it:"Hai aperto [l'oggetto]."
+  },
+  Youopenrevealing:{
+    en:"You open [the object] revealing [a list of objects2].",
+    it:"Hai aperto [l'oggetto] scoprendo [una lista di oggetti2]."
+  },
+  Cantopen:{
+    en:"You can't open [the object].",
+    it:"Non puoi aprire [l'oggetto]."
+  },
+  Cantopenwithout:{
+    en:"You can't open [the object] without a key.",
+    it:"Non puoi aprire [l'oggetto] senza una chiave."
+  },
+  close:{en:"close",it:"chiudi"},
+  Youclose:{
+    en:"You close [the object].",
+    it:"Hai aperto [l'oggetto]."
+  },
+  Cantclose:{
+    en:"You can't close [the object].",
+    it:"Non puoi chiudere [l'oggetto]."
+  },
+  Cantclosewithout:{
+    en:"You can't close [the object] without a key.",
+    it:"Non puoi chiudere [l'oggetto] senza una chiave."
+  },
+  n:{en:"north",it:"nord"},
+  s:{en:"south",it:"sud"},
+  w:{en:"west",it:"ovest"},
+  e:{en:"east",it:"est"},
+  u:{en:"up",it:"su"},
+  d:{en:"down",it:"giù"},
+  enter:{en:"enter",it:"entra"},
+  Youenter:{
+    en:"You enter in [the object].",
+    it:"Sei entrato [nell'oggetto]."
+  },
+  Cantenter:{
+    en:"You can't enter in [the object].",
+    it:"Non puoi entrare [nell'oggetto]."
+  },
+  exit:{en:"exit",it:"esci"},
+  Youexit:{
+    en:"You exit [the object].",
+    it:"Sei usciti [dall'oggetto]."
+  },
+  Cantexit:{
+    en:"You can't exit [the object].",
+    it:"Non puoi uscire [dall'oggetto]."
+  },
+  sit:{en:"sit",it:"siediti"},
+  Yousit:{
+    en:"You sit on [the object].",
+    it:"Ti sei seduto [sull'oggetto]."
+  },
+  Cantsit:{
+    en:"You can't sit on [the object].",
+    it:"Non puoi sederti [sull'oggetto]."
+  },
+  getoff:{en:"get off",it:"scendi"},
+  Yougetoff:{
+    en:"You get off [the object].",
+    it:"Sei sceso [dall'oggetto]."
+  },
+  Cantgetoff:{
+    en:"You can't get off [the object].",
+    it:"Non puoi scendere [dall'oggetto]."
+  },
+  climb:{en:"climb",it:"sali"},
+  Youclimb:{
+    en:"You climb [the object].",
+    it:"Sei salito [sull'oggetto]."
+  },
+  Cantclimb:{
+    en:"You can't get on [the object].",
+    it:"Non puoi salire [sull'oggetto]."
+  },
+  descend:{en:"descend",it:"scendi"},
+  Youdescend:{
+    en:"You descend [the object].",
+    it:"Sei sceso [dall'oggetto]."
+  },
+  Cantdescend:{
+    en:"You can't descend [the object].",
+    it:"Non puoi scendere [dall'oggetto]."
+  },
 }
 var it={
   artdet:function(obj){
@@ -220,7 +315,7 @@ function changelang(code){
   getel("$save").innerHTML=x(w.SAVE)
   getel("$restore").innerHTML=x(w.RESTORE)
   getel("$restart").innerHTML=x(w.RESTART)
-  refresh()
+  showAll()
   msg(x(w.Langchanged))
 }
 
@@ -231,14 +326,13 @@ function choutline(el,newstr){
 }
 
 function world(){
-  this.loc='void'
-  this.objects={void:{id:'void',name:'void',loc:'void',objects:['void ']}}
+  this.loc='@intro'
+  this.objects={void:{id:'void',name:'void',loc:'void',objects:['void']}}
   this.carried=[]
   this.worn=[]
   this.add=function(obj){this.objects[obj.id]=obj}
 }
 var world=new world()
-function start(roomid){world.loc=roomid}
 function object(id,type){
   this.id=id
   addobject(this)
@@ -269,8 +363,8 @@ function group(id,type){
     obj.loc=this.id
   }
 }
-function actor(id){
-  group.call(this,id,'actor')
+function person(id){
+  group.call(this,id,'person')
   this.wears=[]
 }
 function room(id){
@@ -280,6 +374,19 @@ function room(id){
   this.addexit=function(obj){
     this.exits.push(obj.id)
     obj.loc=this.id
+  }
+}
+function intro(){
+  room.call(this,'@intro')
+  this.name="Untitled"
+  this.author="Anonymous"
+  this.subtitle=""
+  this.blurb=""
+  this.IFID=""
+  this.date=""
+  this.release=""
+  this.addtitle=function(newlang,newtitle){
+    this.addprop('title',newlang,newtitle)
   }
 }
 function exit(id){
@@ -341,6 +448,9 @@ function innerobject(obj) {
 function innerclass(id,type,name){
   return '<span class="'+type+'" id="'+id+'" draggable="true" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)" onclick="clickon(event)">'+name+'</span>'
 }
+function inneraction(id,obj){
+  return '<span class="action" id="'+id+' '+obj.id+'" draggable="true" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)" onclick="clickon(event)">('+x(w[id])+')</span>'
+}
 
 function mark(text){
   text=text.replaceAll(/{([^}]+)}/g,function(match,p1){
@@ -369,6 +479,12 @@ function youwear(){
   return x(w.Wearing,world.worn)
 }
 
+function menulist(array){
+  var ret=""
+  for(var ct=0;ct<array.length;ct++)
+    ret+=x(w.object,getobj(array[ct]))+" "
+  return ret
+}
 function listobjs(array){
   if(array.length==0)
     return x(w.none)
@@ -451,21 +567,21 @@ function dragndrop(source,drain){
       world.worn.push(sobj.id)
       sobj.loc='@worn'
       msg(x(w.Youwear,sobj))
-      return refresh()
+      return showAll()
     }
     if(loc=='@worn'){
       remove(world.worn,sobj.id)
       world.carried.push(sobj.id)
       sobj.loc='@carried'
       msg(x(w.Youremove,sobj))
-      return refresh()
+      return showAll()
     }
     var org=getobj(loc)
     remove(org.objects,sobj.id)
     world.carried.push(sobj.id)
     sobj.loc='@carried'
     msg(x(w.Youtake,sobj,org))
-    return refresh()
+    return showAll()
   }
   var dobj=getobj(drain)
   if(!isvisible(dobj))
@@ -478,21 +594,21 @@ function dragndrop(source,drain){
         remove(world.carried,sobj.id)
         dobj.add(sobj)
         msg(x(w.Youdrop,sobj,dobj))
-        return refresh()
+        return showAll()
       }
       if(sobj.loc=='@worn'){
         remove(world.worn,sobj.id)
         dobj.add(sobj)
         msg(x(w.Youremove,sobj))
         msg(x(w.Youdrop,sobj,dobj))
-        return refresh()
+        return showAll()
       }
       var sloc=getobj(sobj.loc)
       remove(sloc.objects,sobj.id)
       dobj.add(sobj)
       msg(x(w.Youtake,sobj,sloc))
       msg(x(w.Youputin,sobj,dobj))
-      return refresh()
+      return showAll()
     case 'container':
       if(dobj.closed)
         return msg(x(w.Cantdo)+' '+x(w.Itsclosed,dobj))
@@ -500,49 +616,58 @@ function dragndrop(source,drain){
         remove(world.carried,sobj.id)
         dobj.add(sobj)
         msg(x(w.Youputin,sobj,dobj))
-        return refresh()
+        return showAll()
       }
       if(sobj.loc=='@worn'){
         remove(world.worn,sobj.id)
         dobj.add(sobj)
         msg(x(w.Youremove,sobj))
         msg(x(w.Youputin,sobj,dobj))
-        return refresh()
+        return showAll()
       }
       var sloc=getobj(sobj.loc)
       remove(sloc.objects,sobj.id)
       dobj.add(sobj)
       msg(x(w.Youtake,sobj,sloc))
       msg(x(w.Youputin,sobj,dobj))
-      return refresh()
+      return showAll()
     case 'supporter':
       if(sobj.loc=='@carried'){
         remove(world.carried,sobj.id)
         dobj.add(sobj)
         msg(x(w.Youputon,sobj,dobj))
-        return refresh()
+        return showAll()
       }
       if(sobj.loc=='@worn'){
         remove(world.worn,sobj.id)
         dobj.add(sobj)
         msg(x(w.Youremove,sobj))
         msg(x(w.Youputon,sobj,dobj))
-        return refresh()
+        return showAll()
       }
       var sloc=getobj(sobj.loc)
       remove(sloc.objects,sobj.id)
       dobj.add(sobj)
       msg(x(w.Youtake,sobj,sloc))
       msg(x(w.Youputon,sobj,dobj))
-      return refresh()
+      return showAll()
     default:
       return msg(x(w.Cantdo))
   }
 }
 
 function clickon(ev){
+  if(ev.target.className=='action'){
+    var words=ev.target.id.split(' ')
+    return perform(words[0],words[1],words[2])
+  }
   var obj=getobj(ev.target.id)
-  obj.type=='exit'?gothrough(obj):examine(obj)
+  switch(obj.type){
+    case 'exit':
+      return gothrough(obj)
+    default:
+      return examine(obj)
+  }
 }
 function gothrough(obj){
   if(!isvisible(obj))
@@ -550,13 +675,24 @@ function gothrough(obj){
   world.loc=obj.roomto
   var room=getobj(world.loc)
   msg(x(w.Yougoto,room))
-  refresh()
+  showAll()
+}
+function perform(action,id,id2){
+  switch(action){
+    case 'take':
+      return dragndrop(id,'@inventory')
+  }
 }
 function examine(obj){
   if(!isvisible(obj))
     return msg(x(w.Cantsee,obj))
   var str=mark(x(obj.desc?obj.desc:w.Nospecial,obj))
-  if(obj.objects && obj.objects.length>0)
+  switch(obj.type){
+    case "thing":
+      if(!obj.scenery&&obj.loc!="@carried") str+=" "+inneraction('take',obj)
+      break
+  }
+  if(obj.objects&&obj.objects.length>0)
     str+="<br>"+(
       obj.type=="supporter"||obj.type=="mount"?
       onyousee:inyousee
@@ -564,17 +700,16 @@ function examine(obj){
   msg(str)
 }
 
-function refreshRoom(){
+function showRoom(){
   var room=getroom()
-  var str
-  str='<h2 id="'+room.id+'" draggable="false" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)">'+cap(x(room.name))+'</h2>'
+  var str='<h2 id="'+room.id+'" draggable="false" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)">'+cap(x(room.name))+'</h2>'
     +mark(x(room.desc))
   if(room.objects.length>0)
     str+="<p>"+yousee(room)
-  str+="<p>"+listexits(room)
+  str+="<p>"+(room.id.charAt(0)=='@'?menulist(room.exits):listexits(room))
   inner('$room',str)
 }
-function refreshInventory(){
+function showInventory(){
   var str='<h2 id="@inventory" draggable="false" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)">'+x(w.Inventory)+"</h2>"
   if(world.carried.length>0)
     str+="<p>"+youcarry()
@@ -584,9 +719,13 @@ function refreshInventory(){
     str+="<p>"+youwear()
   inner('$inventory',str)
 }
-function refresh(){
-  refreshRoom()
-  refreshInventory()
+function showAll(){
+  showRoom()
+  showInventory()
+}
+
+function restart(){
+  alert("Not implemented yet")
 }
 
 window.onload=function(){
@@ -595,5 +734,49 @@ window.onload=function(){
     el.id="$msg"+ct
     getel("$msg").appendChild(el)
   }
-  refresh()
+  showAll()
+}
+
+//tutorial
+
+{
+var r=new room('@help')
+r.name="tutorial room"
+r.addname('it','stanza del tutorial')
+r.itfemale=true
+r.desc="Click on the highlighted words to examine them.<br>Drag and drop them to move the objects around.<br>You can drop them also on 'Inventory' or the room name."
+r.adddesc('it',"Clicca le parole evidenziate per esaminarle.<br>Trascinale per spostare gli oggetti corrispondenti.<br>Puoi anche rilasciarle su 'Inventario' o sulla stanza.")
+var t=new thing('@help-cube')
+t.name="cube"
+t.addname('it','cubo')
+t.desc="A small {@help-cube}. <i>Drag it on the inventory or on other objects.</i>"
+t.adddesc('it',"Una piccolo {@help-cube}. <i>Trascinalo sull'inventario o su altri oggetti.</i>")
+r.add(t)
+t=new thing('@help-hat')
+t.name="hat"
+t.addname('it','cappello')
+t.wearable=true
+t.desc= "A {@help-hat}. <i>Drag it twice on the inventory to wear it.</i>"
+t.adddesc('it',"Un {@help-hat}. <i>Trascinalo due volte sull'inventario per indossarlo.</i>")
+r.add(t)
+t=new supporter('@help-table')
+t.name="table"
+t.addname('it','tavolo')
+t.desc= "A {@help-table}. <i>Drag objects on it.</i>"
+t.adddesc('it',"Un {@help-table}. <i>Trascina oggetti su di esso.</i>")
+r.add(t)
+t=new container('@help-box')
+t.name="box"
+t.addname('it','scatola')
+t.desc="An open {@help-box}. <i>Drag objects on it.</i>"
+t.adddesc('it',"Una {@help-box} aperta. <i>Trascina oggetti su di essa.</i>")
+t.closed=false
+t.openable=false
+t.itfemale=true
+r.add(t)
+t=new exit("@help-exit")
+t.name='Back to the game'
+t.addname("it","Torna al gioco")
+t.roomto='@intro'
+r.addexit(t)
 }

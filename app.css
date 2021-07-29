@@ -14,8 +14,8 @@ body{
 }
 
 .action{
-  border: dotted #666;
-  font-weight: bold;
+  font-style:italic;
+  font-weight:normal;
   color: black;
   padding: 4px;
   cursor: move;
@@ -25,8 +25,11 @@ body{
   color:#808;
 }
 .exit{
+  border: 1px solid #999;
   font-weight:bold;
   color:#800;
+  border-radius: 12px;
+  padding: 4px;
 }
 .thing{
   border: 2px solid #666;
@@ -55,7 +58,7 @@ body{
   padding: 4px;
   cursor: move;
 }
-.actor,.vehicle,.mount{
+.person,.vehicle,.mount{
   border: 2px dashed #666;
   background-color: red;
   font-weight: bolder;

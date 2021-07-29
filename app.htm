@@ -18,7 +18,7 @@
 </td></tr><tr><td align="right">
 <button id="$restore" type="button" class="button" onclick="window.localStorage.setItem('world',JSON.stringify(world))">RESTORE</button>
 </td></tr><tr><td align="right">
-<button id="$restart" type="button" class="button" onclick="">RESTART</button>
+<button id="$restart" type="button" class="button" onclick="restart()">RESTART</button>
 </td></tr><tr><td>
 &nbsp;
 </td></tr><tr><td align="right">
@@ -27,7 +27,6 @@
 <img class="flag" src="it.svg" id="$it" onclick="changelang('it')" style="outline:solid black;">
 </td></tr></table>
 
-<p>
 <div id='$room'></div>
 <hr>
 <p>
