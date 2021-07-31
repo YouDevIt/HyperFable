@@ -1,10 +1,9 @@
 
-{
 var i,t,r,r2
 i=new intro()
 i.name='Example Story'
 i.addname("it","Storia d'esempio")
-i.itfemale=true
+i.itfemminile=true
 i.desc='A simple example<br>by Leonardo Boselli'
 i.adddesc("it","Un semplice esempio<br>di Leonardo Boselli")
 t=new exit("Start")
@@ -16,13 +15,13 @@ t.addname("it","Aiuto")
 t.roomto='@help'
 i.addexit(t)
 r=new room('kitchen')
-r.itfemale=true
+r.itfemminile=true
 r.addname('it','cucina')
 r.desc="A large kitchen with a {table}."
 r.adddesc('it',"Un'ampia cucina in cui vedi un {table}.")
 t=new thing('pen')
 t.addname('it','penna')
-t.itfemale=true
+t.itfemminile=true
 t=new thing('hat')
 t.addname('it','cappello')
 t.wearable=true
@@ -33,13 +32,14 @@ t.wearable=true
 r.add(t)
 t=new supporter('table')
 t.addname('it','tavolo')
-t.loc='kitchen'
+t.scenery=true
+r.add(t)
 t=new container('box')
 t.addname('it','scatola')
-t.desc="A nice {box}."
-t.adddesc('it',"Una bella {box}.")
-t.closed=false
-t.itfemale=true
+t.desc="A nice [open or closed] {box}."
+t.adddesc('it',"Una bella {box} [aperto o chiuso].")
+t.closable=true
+t.itfemminile=true
 r.add(t)
 t=new person('Pippo')
 t.desc="A handsome {Pippo}."
@@ -62,4 +62,3 @@ t.name='east'
 t.addname("it","est")
 t.roomto='garden'
 r.addexit(t)
-}

@@ -61,6 +61,8 @@ function decodeen(p1,obj1,obj2){
       return listactions(obj1,obj2)
     case 'it':
       return o.enplural?'them':o.enmale?'him':o.enfemale?'her':'it'
+    case 'open or closed':
+      return o.closed?'closed':'open'
     default:
       return p1
   }
@@ -97,11 +99,13 @@ function decodeit(p1,obj1,obj2){
     case "lista di azioni":
       return listactions(obj1,obj2)
     case 'è':
-      return o.itplural?'sono':'è'
+      return o.itplurale?'sono':'è'
     case 'o':
-      return o.itfemale?
-        (o.itplural?'e':'a'):
-        (o.itplural?'i':'o')
+      return o.itfemminile?
+        (o.itplurale?'e':'a'):
+        (o.itplurale?'i':'o')
+    case 'aperto o chiuso':
+      return o.closed?'chius'+decodeit('o',o):'apert'+decodeit('o',o)
     default:
       return p1
   }
@@ -217,6 +221,11 @@ var w={
   wear:{en:"wear [it]",it:"indossarl[o]"},
   remove:{en:"remove [it]",it:"toglierl[o]"},
   open:{en:"open [it]",it:"aprirl[o]"},
+  Alreadyopen:{
+    en:"[The object] [is] already open.",
+    it:"[L'oggetto] [è] già apert[o]"
+  },
+  openorclosed:{en:"[open or closed]",it:"[aperto o chiuso]"},
   Youopen:{
     en:"You open [the object].",
     it:"Hai aperto [l'oggetto]."
@@ -236,7 +245,7 @@ var w={
   close:{en:"close [it]",it:"chiuderl[o]"},
   Youclose:{
     en:"You close [the object].",
-    it:"Hai aperto [l'oggetto]."
+    it:"Hai chiuso [l'oggetto]."
   },
   Cantclose:{
     en:"You can't close [the object].",
@@ -309,10 +318,10 @@ var w={
 }
 var it={
   artdet:function(obj){
-    return obj.proper?"":(obj.itfemale?"la ":"il ")
+    return obj.proper?"":(obj.itfemminile?"la ":"il ")
   },
   artind:function(obj){
-    return obj.proper?"":(obj.itfemale?"una ":"un ")
+    return obj.proper?"":(obj.itfemminile?"una ":"un ")
   },
 }
 var en={
@@ -385,7 +394,7 @@ function person(id){
 }
 function room(id){
   group.call(this,id,'room')
-  this.scenery=true
+  this.fixedinplace=true
   this.exits=[]
   this.addexit=function(obj){
     this.exits.push(obj.id)
@@ -415,11 +424,6 @@ function thing(id){
 }
 function container(id){
   group.call(this,id,'container')
-  this.movable=true
-  this.enterable=false
-  this.transparent=true
-  this.locked=false
-  this.closed=false
   this.keys=[]
 }
 function vehicle(id){
@@ -428,17 +432,19 @@ function vehicle(id){
 }
 function supporter(id){
   group.call(this,id,'supporter')
-  this.scenery=true
-  this.enterable=true
 }
 function mount(id){
   supporter.call(this,id,'mount')
-  this.scenery=false
 }
 
 function addobject(obj){world.add(obj)}
 function getobj(id){return world.objects[id]}
-function getroom(){return world.objects[world.loc]}
+function getroom(){
+  var oloc=getobj(world.loc)
+  while(oloc.type!='room')
+    oloc=getobj(oloc.loc)
+  return oloc
+}
 
 function getel(elname){return document.getElementById(elname);}
 
@@ -501,7 +507,11 @@ function menulist(array){
     ret+=x(w.object,getobj(array[ct]))+" "
   return ret
 }
-function listobjs(array){
+function listobjs(argarray){
+  var array=[]
+  for(const item of argarray)
+    if(!getobj(item).scenery)
+      array.push(item)
   if(array.length==0)
     return x(w.none)
   ret=x(w.object,getobj(array[0]))
@@ -523,7 +533,11 @@ function listactions(array,obj){
   ret+=x(w.or)+inneraction(array[array.length-1],obj)
   return ret
 }
-function anlistobjs(array){
+function anlistobjs(argarray){
+  var array=[]
+  for(const item of argarray)
+    if(!getobj(item).scenery)
+      array.push(item)
   if(array.length==0)
     return x(w.nothing)
   ret=x(w.anobject,getobj(array[0]))
@@ -595,7 +609,7 @@ function dragndrop(source,drain){
   var sobj=getobj(source)
   if(!isvisible(sobj))
     return msg(x(w.Cantsee,sobj))
-  if(sobj.scenery||!sobj.movable)
+  if(sobj.scenery||sobj.fixedinplace)
     return msg(x(w.Canttake,sobj))
   if(drain=='@inventory'){
     var loc=sobj.loc
@@ -658,6 +672,7 @@ function dragndrop(source,drain){
     world.carried.push(sobj.id)
     sobj.loc='@carried'
     msg(x(w.Youtake,sobj,org))
+    showAll()
     if(!sobj.wearable)
       return msg(x(w.Cantwear,sobj))
     remove(world.carried,sobj.id)
@@ -762,39 +777,75 @@ function gothrough(obj){
     msg(x(w.Yougoto,room))
   showAll()
 }
-function perform(action,id,id2){
-  switch(action){
-    case 'take':
-      return dragndrop(id,'@carried')
-    case 'wear':
-      return dragndrop(id,'@worn')
-  }
-}
 function examine(obj){
   if(!isvisible(obj))
     return msg(x(w.Cantsee,obj))
   var str=mark(x(obj.desc?obj.desc:w.Nospecial,obj))
   str+=suggestactions(obj)
   if(obj.objects&&obj.objects.length>0)
-    str+="<br>"+(
-      obj.type=="supporter"||obj.type=="mount"?
-      onyousee:inyousee
-    )(obj)
+    if(obj.type!='container'||obj.transparent||!obj.closed)
+      str+="<br>"+(
+        obj.type=="supporter"||obj.type=="mount"?
+        onyousee:inyousee
+      )(obj)
   msg(str)
 }
 function suggestactions(obj){
   var actions=[]
   switch(obj.type){
+    case "container":
+      if(obj.closable)
+        actions.push(obj.closed?"open":"close")
+    case "supporter":
     case "thing":
-      if(!obj.scenery){
-        if(obj.loc!="@carried")
+      if(!obj.scenery||!obj.fixedinplace){
+        if(obj.loc=="@carried")
+          actions.push('drop')
+        else if(obj.loc!="@worn")
           actions.push('take')
-        else if(obj.wearable)
-          actions.push('wear')
+        if(obj.wearable)
+          if(obj.loc=="@worn")
+            actions.push('remove')
+          else
+            actions.push('wear')
       }
       break
   }
   return actions.length>0?"<br>"+x(w.Youcando,actions,obj):""
+}
+function perform(action,id,id2){
+  switch(action){
+    case 'take':
+      return dragndrop(id,'@carried')
+    case 'wear':
+      return dragndrop(id,'@worn')
+    case 'drop':
+      return dragndrop(id,getroom().id)
+    case 'remove':
+      return dragndrop(id,'@carried')
+    case 'open':
+      return doopen(id)
+    case 'close':
+      return doclose(id)
+  }
+}
+function doopen(id){
+  var obj=getobj(id)
+  if(!obj.closed)
+    return msg(x(w.Alreadyopen,obj))
+  if(!obj.closable)
+    return msg(x(w.Cantopen,obj))
+  obj.closed=false
+  msg(x(obj.transparent?w.Youopen:w.Youopenrevealing,obj,obj.objects))
+}
+function doclose(id){
+  var obj=getobj(id)
+  if(obj.closed)
+    return msg(x(w.Alreadyclosed,obj))
+  if(!obj.closable)
+    return msg(x(w.Cantclose,obj))
+  obj.closed=true
+  msg(x(w.Youclose,obj))
 }
 
 function showRoom(){
@@ -836,11 +887,10 @@ window.onload=function(){
 
 //tutorial
 
-{
 var r=new room('@help')
 r.name="tutorial room"
 r.addname('it','stanza del tutorial')
-r.itfemale=true
+r.itfemminile=true
 r.desc="Click on the highlighted words to examine them.<br>Drag and drop them to move the objects around.<br>You can drop them also on 'Inventory' or the room name."
 r.adddesc('it',"Clicca le parole evidenziate per esaminarle.<br>Trascinale per spostare gli oggetti corrispondenti.<br>Puoi anche rilasciarle su 'Inventario' o sulla stanza.")
 var t=new thing('@help-cube')
@@ -869,11 +919,10 @@ t.desc="An open {@help-box}. <i>Drag objects on it.</i>"
 t.adddesc('it',"Una {@help-box} aperta. <i>Trascina oggetti su di essa.</i>")
 t.closed=false
 t.openable=false
-t.itfemale=true
+t.itfemminile=true
 r.add(t)
 t=new exit("@help-exit")
 t.name='Back to the game'
 t.addname("it","Torna al gioco")
 t.roomto='@intro'
 r.addexit(t)
-}
