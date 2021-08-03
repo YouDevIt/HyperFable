@@ -19,9 +19,6 @@ r.itfemminile=true
 r.addname('it','cucina')
 r.desc="A large kitchen with a {table}."
 r.adddesc('it',"Un'ampia cucina in cui vedi un {table}.")
-t=new thing('pen')
-t.addname('it','penna')
-t.itfemminile=true
 t=new thing('hat')
 t.addname('it','cappello')
 t.wearable=true
@@ -29,6 +26,14 @@ r.add(t)
 t=new thing('coat')
 t.addname('it','cappotto')
 t.wearable=true
+r.add(t)
+t=new thing('goose')
+t.addname('it','oca')
+t.itfemminile=true
+r.add(t)
+t=new thing('quill')
+t.addname('it','penna')
+t.itfemminile=true
 r.add(t)
 t=new supporter('table')
 t.addname('it','tavolo')
@@ -41,11 +46,7 @@ t.adddesc('it',"Una bella {box} [aperto o chiuso].")
 t.closable=true
 t.itfemminile=true
 r.add(t)
-t=new person('Pippo')
-t.desc="A handsome {Pippo}."
-t.adddesc('it',"Un bel {Pippo}.")
-t.proper=true
-r.add(t)
+
 r2=new room('garden')
 r2.addname('it','giardino')
 r2.desc="A green garden."

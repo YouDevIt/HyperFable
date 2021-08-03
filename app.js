@@ -79,15 +79,15 @@ function decodeit(p1,obj1,obj2){
     case "l'oggetto":
       return it.artdet(o)+innerobject(o)
     case "nell'oggetto":
-      return "ne"+it.artdet(o)+innerobject(o)
+      return it.prepin(o)+innerobject(o)
     case "Nell'oggetto":
-      return "Ne"+it.artdet(o)+innerobject(o)
+      return cap(it.prepin(o))+innerobject(o)
     case "sull'oggetto":
-      return "su"+it.artdet(o)+innerobject(o)
+      return it.prepsu(o)+innerobject(o)
     case "Sull'oggetto":
-      return "Su"+it.artdet(o)+innerobject(o)
+      return cap(it.prepsu(o))+innerobject(o)
     case "dall'oggetto":
-      return "da"+it.artdet(o)+innerobject(o)
+      return it.prepda(o)+innerobject(o)
     case "un oggetto":
       return it.artind(o)+innerobject(o)
     case "oggetto":
@@ -273,7 +273,7 @@ var w={
   exit:{en:"exit [it]",it:"uscirne"},
   Youexit:{
     en:"You exit [the object].",
-    it:"Sei usciti [dall'oggetto]."
+    it:"Sei uscito [dall'oggetto]."
   },
   Cantexit:{
     en:"You can't exit [the object].",
@@ -317,11 +317,84 @@ var w={
   },
 }
 var it={
+  artnum:function(obj){
+    var name=x(obj.name)
+    var ch1=name.charAt(0)
+    var ch2=name.charAt(1)
+    if("aeiouAEIOU".indexOf(ch1)>=0)
+      return 0
+    else if("zxZX".indexOf(ch1)>=0)
+      return 1
+    else if("sS".indexOf(ch1)>=0)
+      return "aeiouAEIOU".indexOf(ch2)>=0?2:1
+    else if("pP".indexOf(ch1)>=0)
+      return 's'==ch2?1:2
+    else if("gG".indexOf(ch1)>=0)
+      return 'n'==ch2?1:2
+    else
+      return 2
+  },
   artdet:function(obj){
-    return obj.proper?"":(obj.itfemminile?"la ":"il ")
+    if(obj.proper)
+      return ''
+    var num=it.artnum(obj)
+    if(obj.itplurale) {
+      if(obj.itfemminile)
+        return 'le '
+      else
+        return num==2?'i ':'gli '
+    }else{
+      if(obj.itfemminile)
+        return num==0?"l'":'la '
+      else{
+        if(num==0)
+          return "l'"
+        else
+          return num==1?'lo ':'il '
+      }
+    }
   },
   artind:function(obj){
-    return obj.proper?"":(obj.itfemminile?"una ":"un ")
+    if(obj.proper)
+      return ''
+    var num=it.artnum(obj)
+    if(obj.itplurale) {
+      if(obj.itfemminile)
+        return 'delle '
+      else
+        return num==2?'dei ':'degli '
+    }else{
+      if(obj.itfemminile)
+        return num==0?"un'":'una '
+      else
+        return num==0?'uno ':'un '
+    }
+  },
+  prepdi:function(obj){return this.prepart('di',obj)},
+  prepa:function(obj){return this.prepart('a',obj)},
+  prepda:function(obj){return this.prepart('da',obj)},
+  prepin:function(obj){return this.prepart('in',obj)},
+  prepsu:function(obj){return this.prepart('su',obj)},
+  prepart:function(prep,obj){
+    if(obj.proper)
+      return prep
+    var num=it.artnum(obj)
+    var str=(prep=='di'?'de':(prep=='in'?'ne':prep))
+    if(obj.itplurale) {
+      if(obj.itfemminile)
+        return str+='lle '
+      else
+        return str+=num==2?'i ':'gli '
+    }else{
+      if(obj.itfemminile)
+        return str+=num==0?"ll'":'lla '
+      else{
+        if(num==0)
+          return str+="ll'"
+        else
+          return str+=num==1?'llo ':'l '
+      }
+    }
   },
 }
 var en={
@@ -798,7 +871,7 @@ function suggestactions(obj){
         actions.push(obj.closed?"open":"close")
     case "supporter":
     case "thing":
-      if(!obj.scenery||!obj.fixedinplace){
+      if(!(obj.scenery||obj.fixedinplace)){
         if(obj.loc=="@carried")
           actions.push('drop')
         else if(obj.loc!="@worn")
