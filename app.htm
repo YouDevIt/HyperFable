@@ -10,13 +10,22 @@
 
 <table align="right">
 <tr><td align="right">
-<label>Edit <input type="checkbox" onclick="changeEditable()"></label>
+<label class="edit">EDIT <input type="checkbox" onclick="changeEditable()"></label>
 </td></tr><tr><td>
 &nbsp;
 </td></tr><tr><td align="right">
-<button id="$save" type="button" class="button" onclick="window.localStorage.setItem('world',JSON.stringify(world))">SAVE</button>
+<button id="$savefile" type="button" class="button" onclick="download()">SAVE FILE</button>
 </td></tr><tr><td align="right">
-<button id="$restore" type="button" class="button" onclick="window.localStorage.setItem('world',JSON.stringify(world))">RESTORE</button>
+<label id="$loadfile" for="file-upload" class="custom-file-upload">&nbsp;LOAD FILE&nbsp;</label>
+<input id="file-upload" type="file" onchange="loadfile(event)" accept="text/plain">
+</td></tr><tr><td>
+&nbsp;
+</td></tr><tr><td align="right">
+<button id="$save" type="button" class="button" onclick="saveWorld()">SAVE</button>
+</td></tr><tr><td align="right">
+<button id="$restore" type="button" class="button" onclick="loadWorld()">RESTORE</button>
+</td></tr><tr><td>
+&nbsp;
 </td></tr><tr><td align="right">
 <button id="$restart" type="button" class="button" onclick="restart()">RESTART</button>
 </td></tr><tr><td>

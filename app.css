@@ -13,6 +13,25 @@ body{
   width:32px;
 }
 
+.edit{
+  font-family:arial;
+  font-size:13px;
+}
+
+input[type="file"] {
+  display: none;
+}
+.custom-file-upload {
+  font-family: arial;
+  font-size: 13px;
+  border: 2px solid #000;
+  background-color: #ddd;
+  display: inline-block;
+  padding: 2px;
+  cursor: pointer;
+  box-shadow:4px 4px 4px #aaa;
+}
+
 .action{
   font-style:italic;
   font-weight:normal;

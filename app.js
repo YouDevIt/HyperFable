@@ -1,4 +1,6 @@
 
+//// utilities
+
 function isString(s) {
   return typeof(s)==='string'||s instanceof String
 }
@@ -10,8 +12,29 @@ function remove(array,id){
   return true
 }
 
+//// multi-language
+
 const langdef='en'
 var langtag='en'
+
+function changelang(code){
+  langtag=code
+  choutline('$en',code=="en"?"solid red;":"solid black;")
+  choutline('$it',code=="it"?"solid red;":"solid black;")
+  getel("$savefile").innerHTML=x(w.SAVEFILE)
+  getel("$loadfile").innerHTML=x(w.LOADFILE)
+  getel("$save").innerHTML=x(w.SAVE)
+  getel("$restore").innerHTML=x(w.RESTORE)
+  getel("$restart").innerHTML=x(w.RESTART)
+  showAll()
+  msg(x(w.Langchanged))
+}
+function choutline(el,newstr){
+  var str=getel(el).style.cssText
+  var idx= str.indexOf("outline:")
+  getel(el).style.cssText=str.substring(0,idx+9)+newstr
+}
+
 function x(sentence,obj1,obj2){
   if(isString(sentence))
     return sentence
@@ -27,16 +50,19 @@ function decode(lan,txt,obj1,obj2){
   txt=txt.replaceAll(/\[([^\]]+)\]/g,function(match,p1){
     switch(lan){
       case 'en':
-        return decodeen(p1,obj1,obj2)
+        return decode_en(p1,obj1,obj2)
       case 'it':
-        return decodeit(p1,obj1,obj2)
+        return decode_it(p1,obj1,obj2)
       default:
         return p1
     }
   })
   return txt
 }
-function decodeen(p1,obj1,obj2){
+
+// english transform rules
+
+function decode_en(p1,obj1,obj2){
   var o=obj1
   if(p1.charAt(p1.length-1)=='2'){
     p1=p1.substring(0,p1.length-1)
@@ -52,7 +78,7 @@ function decodeen(p1,obj1,obj2){
     case 'object':
       return innerobject(o)
     case 'is':
-      return o.enplural?'are':'is'
+      return o.en_plural?'are':'is'
     case 'a list of objects':
       return anlistobjs(o)
     case 'list of objects':
@@ -60,14 +86,17 @@ function decodeen(p1,obj1,obj2){
     case "list of actions":
       return listactions(obj1,obj2)
     case 'it':
-      return o.enplural?'them':o.enmale?'him':o.enfemale?'her':'it'
+      return o.en_plural?'them':o.en_male?'him':o.en_female?'her':'it'
     case 'open or closed':
       return o.closed?'closed':'open'
     default:
       return p1
   }
 }
-function decodeit(p1,obj1,obj2){
+
+// italian transform rules
+
+function decode_it(p1,obj1,obj2){
   var o=obj1
   if(p1.charAt(p1.length-1)=='2'){
     p1=p1.substring(0,p1.length-1)
@@ -99,22 +128,32 @@ function decodeit(p1,obj1,obj2){
     case "lista di azioni":
       return listactions(obj1,obj2)
     case 'è':
-      return o.itplurale?'sono':'è'
+      return o.it_plurale?'sono':'è'
     case 'o':
-      return o.itfemminile?
-        (o.itplurale?'e':'a'):
-        (o.itplurale?'i':'o')
+      return o.it_femminile?
+        (o.it_plurale?'e':'a'):
+        (o.it_plurale?'i':'o')
     case 'aperto o chiuso':
-      return o.closed?'chius'+decodeit('o',o):'apert'+decodeit('o',o)
+      return o.closed?'chius'+decode_it('o',o):'apert'+decode_it('o',o)
     default:
       return p1
   }
 }
+
+// sentences
+
 var w={
   Langchanged:{
     en:"Now the story is in English.",
     it:"Ora la storia è in italiano.",
   },
+  Done:{en:"Task completed.",it:"Compito completato."},
+  Error:{en:"An error has occurred.",it:"Si è verificato un errore."},
+  saved:{en:"saved",it:"salvato"},
+  loaded:{en:"loaded",it:"caricato"},
+  Insertsave:{en:"Save name?",it:"Nome del salvataggio?"},
+  Insertload:{en:"Load name?",it:"Nome del caricamento?"},
+  Insertfile:{en:"Insert the filename:",it:"Nome del file?"},
   by:{en:"by ",it:"di "},
   Nothingtodo:{en:"Nothing to do.",it:"Niente da fare."},
   Youcando:{en:"(You can [list of actions])",it:"(Puoi [lista di azioni])"},
@@ -213,6 +252,8 @@ var w={
   object:{en:"[object]",it:"[oggetto]"},
   and:{en:", and ",it:" e "},
   or:{en:", or ",it:" o "},
+  SAVEFILE:{en:"SAVE FILE",it:"SALVA FILE"},
+  LOADFILE:{en:"&nbsp;LOAD FILE&nbsp;",it:"&nbsp;CARICA FILE&nbsp;"},
   SAVE:{en:"SAVE",it:"SALVA"},
   RESTART:{en:"RESTART",it:"RICOMINCIA"},
   RESTORE:{en:"RESTORE",it:"RIPRISTINA"},
@@ -316,6 +357,20 @@ var w={
     it:"Non puoi scendere [dall'oggetto]."
   },
 }
+
+// english grammar rules
+
+var en={
+  detart:function(obj){return obj.proper?"":"the "},
+  indart:function(obj){
+    if(obj.proper) return ""
+    var first=x(obj.name).charAt(0)
+    return ("aeiouAEIOU".indexOf(first)>=0)?"an ":"a "
+  },
+}
+
+// italian grammar rules
+
 var it={
   artnum:function(obj){
     var name=x(obj.name)
@@ -338,13 +393,13 @@ var it={
     if(obj.proper)
       return ''
     var num=it.artnum(obj)
-    if(obj.itplurale) {
-      if(obj.itfemminile)
+    if(obj.it_plurale) {
+      if(obj.it_femminile)
         return 'le '
       else
         return num==2?'i ':'gli '
     }else{
-      if(obj.itfemminile)
+      if(obj.it_femminile)
         return num==0?"l'":'la '
       else{
         if(num==0)
@@ -358,13 +413,13 @@ var it={
     if(obj.proper)
       return ''
     var num=it.artnum(obj)
-    if(obj.itplurale) {
-      if(obj.itfemminile)
+    if(obj.it_plurale) {
+      if(obj.it_femminile)
         return 'delle '
       else
         return num==2?'dei ':'degli '
     }else{
-      if(obj.itfemminile)
+      if(obj.it_femminile)
         return num==0?"un'":'una '
       else
         return num==0?'uno ':'un '
@@ -386,7 +441,7 @@ var it={
       else
         return str+=num==2?'i ':'gli '
     }else{
-      if(obj.itfemminile)
+      if(obj.it_femminile)
         return str+=num==0?"ll'":'lla '
       else{
         if(num==0)
@@ -397,30 +452,18 @@ var it={
     }
   },
 }
-var en={
-  detart:function(obj){return obj.proper?"":"the "},
-  indart:function(obj){
-    if(obj.proper) return ""
-    var first=x(obj.name).charAt(0)
-    return ("aeiouAEIOU".indexOf(first)>=0)?"an ":"a "
-  },
-}
 
-function changelang(code){
-  langtag=code
-  choutline('$en',code=="en"?"solid red;":"solid black;")
-  choutline('$it',code=="it"?"solid red;":"solid black;")
-  getel("$save").innerHTML=x(w.SAVE)
-  getel("$restore").innerHTML=x(w.RESTORE)
-  getel("$restart").innerHTML=x(w.RESTART)
-  showAll()
-  msg(x(w.Langchanged))
-}
+//// world model
 
-function choutline(el,newstr){
-  var str=getel(el).style.cssText
-  var idx= str.indexOf("outline:")
-  getel(el).style.cssText=str.substring(0,idx+9)+newstr
+function intro(){
+  room.call(this,'@intro')
+  this.name="Untitled"
+  this.author="Anonymous"
+  this.subtitle=""
+  this.blurb=""
+  this.IFID=""
+  this.date=""
+  this.release=""
 }
 
 function world(){
@@ -431,6 +474,7 @@ function world(){
   this.add=function(obj){this.objects[obj.id]=obj}
 }
 var world=new world()
+
 function object(id,type){
   this.id=id
   addobject(this)
@@ -453,6 +497,7 @@ function object(id,type){
     this.addprop('desc',newlang,newdesc)
   }
 }
+
 function group(id,type){
   object.call(this,id,type?type:'group')
   this.objects=[]
@@ -461,10 +506,12 @@ function group(id,type){
     obj.loc=this.id
   }
 }
+
 function person(id){
   group.call(this,id,'person')
   this.wears=[]
 }
+
 function room(id){
   group.call(this,id,'room')
   this.fixedinplace=true
@@ -474,38 +521,31 @@ function room(id){
     obj.loc=this.id
   }
 }
-function intro(){
-  room.call(this,'@intro')
-  this.name="Untitled"
-  this.author="Anonymous"
-  this.subtitle=""
-  this.blurb=""
-  this.IFID=""
-  this.date=""
-  this.release=""
-  this.addtitle=function(newlang,newtitle){
-    this.addprop('title',newlang,newtitle)
-  }
-}
+
 function exit(id){
   object.call(this,id,'exit')
   this.roomto='void'
 }
+
 function thing(id){
   object.call(this,id,'thing')
   this.movable=true
 }
+
 function container(id){
   group.call(this,id,'container')
   this.keys=[]
 }
+
 function vehicle(id){
   container.call(this,id,'vehicle')
   this.enterable=true
 }
+
 function supporter(id){
   group.call(this,id,'supporter')
 }
+
 function mount(id){
   supporter.call(this,id,'mount')
 }
@@ -518,6 +558,46 @@ function getroom(){
     oloc=getobj(oloc.loc)
   return oloc
 }
+
+// savings
+
+var TRAILER="HyFa-"
+var lastSave="SAVE1"
+
+function saveWorld(filename){
+  if(!filename){
+    filename=window.prompt(x(w.Insertsave),lastSave)
+    if(!filename)
+      return msg(x(w.Error))
+  }
+  window.localStorage.setItem(TRAILER+filename,JSON.stringify(world))
+  if(filename.charAt(0)!='$')
+    msg('"'+filename+'" '+x(w.saved)+'.')
+}
+function loadWorld(filename){
+  if(!filename) {
+    var str=x(w.Insertload)+" < "
+    var list=""
+    for(var key in window.localStorage)
+      if(key.substring(0,TRAILER.length)==TRAILER && key.charAt(TRAILER.length)!='$')
+        list+=(lastSave=key.substring(TRAILER.length))+" "
+    if(list=="")
+      return msg(x(w.Error))
+    str+=list+">"
+    filename=window.prompt(str,lastSave?lastSave:"")
+    if(!filename)
+      return msg(x(w.Error))
+  }
+  var loaded=window.localStorage.getItem(TRAILER+filename)
+  if(!loaded)
+    return msg(x(w.Error))
+  world=JSON.parse(loaded)
+  showAll()
+  if(filename.charAt(0)!='$')
+    msg('"'+filename+'" '+x(w.loaded)+'.')
+}
+
+//// html
 
 function getel(elname){return document.getElementById(elname);}
 
@@ -554,6 +634,8 @@ function mark(text){
   })
   return text
 }
+
+// sentences
 
 function yousee(room){
   return x(w.Seeing,room.objects)
@@ -622,19 +704,26 @@ function anlistobjs(argarray){
   return ret
 }
 
+//// interaction
+
 function changeEditable() {
   document.body.contentEditable = document.body.contentEditable=='true'?'false':'true'
 }
 
-function download(exportText){
-  var dataStr = "data:application/json;charset=utf-8," + encodeURIComponent(exportText);
-  var downloadAnchorNode = document.createElement('a');
-  downloadAnchorNode.setAttribute("href", dataStr);
-  downloadAnchorNode.setAttribute("download", "app.json");
-  document.body.appendChild(downloadAnchorNode);
-  downloadAnchorNode.click();
-  downloadAnchorNode.remove();
+function download(){
+  var filename=window.prompt(x(w.Insertfile),x(getobj('@intro').name)+'.txt')
+  if(!filename)
+    return msg(x(w.Error))
+  var dataStr = "data:text/plain;charset=utf-8,"+encodeURIComponent(JSON.stringify(world))
+  var downloadAnchorNode = document.createElement('a')
+  downloadAnchorNode.setAttribute("href", dataStr)
+  downloadAnchorNode.setAttribute("download",filename)
+  document.body.appendChild(downloadAnchorNode)
+  downloadAnchorNode.click()
+  downloadAnchorNode.remove()
 }
+
+// drag & drop
 
 function allowDrop(ev) {ev.preventDefault()}
 function drag(ev) {
@@ -827,6 +916,8 @@ function dragndrop(source,drain){
   }
 }
 
+// click
+
 function clickon(ev){
   if(ev.target.className=='action'){
     var words=ev.target.id.split(' ')
@@ -931,7 +1022,7 @@ function showRoom(){
   inner('$room',str)
 }
 function showInventory(){
-  var str='<h2 id="@inventory" draggable="false" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)">'+x(w.Inventory)+"</h2>"
+  var str='<h3 id="@inventory" draggable="false" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)">'+x(w.Inventory)+"</h3>"
   if(world.carried.length>0)
     str+="<p>"+youcarry()
   else
@@ -946,7 +1037,8 @@ function showAll(){
 }
 
 function restart(){
-  alert("Not implemented yet")
+  loadWorld('$START')
+  showAll()
 }
 
 window.onload=function(){
@@ -955,18 +1047,34 @@ window.onload=function(){
     el.id="$msg"+ct
     getel("$msg").appendChild(el)
   }
+  saveWorld('$START')
   showAll()
 }
 
-//tutorial
+function loadfile(ev) {
+  var file=ev.target.files[0]
+  var reader=new FileReader()
+  reader.onload=function () {
+    try {
+      alert(reader.result)
+      world=JSON.parse(reader.result)
+      showAll()
+      msg(x(w.Done))
+    } catch (e) {
+      msg(x(w.Error))
+    }
+  }
+  reader.readAsText(file)
+}
+
+//// tutorial
 
 var r=new room('@help')
 r.name="tutorial room"
 r.addname('it','stanza del tutorial')
 r.itfemminile=true
-r.desc="This story is written with <b>HyperFable</b>, an <i>Html5</i> interface for <i>Interactive Fiction</i> works. The main actions to play are:<ul>
-<li>Click on the highlighted words to perform the default action, i.e. to examine the corresponding objects, move through an exit, etc.</li><li>Drag and drop the words to move the objects around, apply actions, and so on.<br>You can even drop words also on 'Inventory' or the room name.</li></ul>"
-r.adddesc('it',"Clicca le parole evidenziate per esaminarle.<br>Trascinale per spostare gli oggetti corrispondenti.<br>Puoi anche rilasciarle su 'Inventario' o sulla stanza.")
+r.desc="This story was created using <b><a href='https://github.com/YouDevIt/HyperFable'>HyperFable</a></b>, an <i>HTML5</i> interface for <i>Interactive Fiction</i> works, written by <a href='mailto:leonardo.boselli@youdev.it'>Leonardo Boselli</a>.<p>The main actions to play are:<ul><li>Click on the highlighted words to perform the default action, i.e. to examine the corresponding objects, move through an exit, etc.</li><li>Drag and drop the words to move the objects around, apply actions, and so on.<br>You can even drag verbs and drop words also on 'Inventory', or the room name. Try different combinations!</li></ul>"
+r.adddesc('it',"Questa storia è stata creata con <b><a href='https://github.com/YouDevIt/HyperFable'>HyperFable</a></b>, un'interfaccia <i>HTML5</i> per lavori di <i>Narrativa Interattiva</i> works, scritta da <a href='mailto:leonardo.boselli@youdev.it'>Leonardo Boselli</a>.<p>Le principali azione per giocare sono:<ul><li>Clicca sulle parole evidenziate per effettuare l'azione di base, cioè esaminare gli oggetti corrispondenti, muoverti attraverso un'uscita, ecc.</li><li>Trascina e rilascia (drag & drop) le parole per cambiare la posizione degli oggetti, applicare azioni e così via.<br>Puoi anche trascinare verbi e spostare parole anche su 'Inventario' or sul nome della stanza. Tenta diverse combinazioni!</li></ul>")
 var t=new thing('@help-cube')
 t.name="cube"
 t.addname('it','cubo')
@@ -985,6 +1093,7 @@ t.name="table"
 t.addname('it','tavolo')
 t.desc= "A {@help-table}. <i>Drag objects on it.</i>"
 t.adddesc('it',"Un {@help-table}. <i>Trascina oggetti su di esso.</i>")
+t.fixedinplace=true
 r.add(t)
 t=new container('@help-box')
 t.name="box"
@@ -993,7 +1102,7 @@ t.desc="An open {@help-box}. <i>Drag objects on it.</i>"
 t.adddesc('it',"Una {@help-box} aperta. <i>Trascina oggetti su di essa.</i>")
 t.closed=false
 t.openable=false
-t.itfemminile=true
+t.it_femminile=true
 r.add(t)
 t=new exit("@help-exit")
 t.name='Back to the game'
