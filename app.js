@@ -964,7 +964,8 @@ var r=new room('@help')
 r.name="tutorial room"
 r.addname('it','stanza del tutorial')
 r.itfemminile=true
-r.desc="Click on the highlighted words to examine them.<br>Drag and drop them to move the objects around.<br>You can drop them also on 'Inventory' or the room name."
+r.desc="This story is written with <b>HyperFable</b>, an <i>Html5</i> interface for <i>Interactive Fiction</i> works. The main actions to play are:<ul>
+<li>Click on the highlighted words to perform the default action, i.e. to examine the corresponding objects, move through an exit, etc.</li><li>Drag and drop the words to move the objects around, apply actions, and so on.<br>You can even drop words also on 'Inventory' or the room name.</li></ul>"
 r.adddesc('it',"Clicca le parole evidenziate per esaminarle.<br>Trascinale per spostare gli oggetti corrispondenti.<br>Puoi anche rilasciarle su 'Inventario' o sulla stanza.")
 var t=new thing('@help-cube')
 t.name="cube"
