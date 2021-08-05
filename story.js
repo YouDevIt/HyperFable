@@ -6,18 +6,18 @@ var i,t,r,r2
 
 i=new intro()
 i.name='Example Story'
-i.addname("it","Storia d'esempio")
+objectAddname(i,"it","Storia d'esempio")
 i.it_femminile=true
 i.desc='A simple example<br>by Leonardo Boselli'
-i.adddesc("it","Un semplice esempio<br>di Leonardo Boselli")
+objectAdddesc(i,"it","Un semplice esempio<br>di Leonardo Boselli")
 t=new exit("Start")
-t.addname("it","Inizia")
+objectAddname(t,"it","Inizia")
 t.roomto='kitchen'
-i.addexit(t)
+roomAddexit(i,t)
 t=new exit("Help")
-t.addname("it","Aiuto")
+objectAddname(t,"it","Aiuto")
 t.roomto='@help'
-i.addexit(t)
+roomAddexit(i,t)
 
 //// rooms
 
@@ -25,52 +25,52 @@ i.addexit(t)
 
 r=new room('kitchen')
 r.it_femminile=true
-r.addname('it','cucina')
+objectAddname(r,'it','cucina')
 r.desc="A large kitchen with a {table}."
-r.adddesc('it',"Un'ampia cucina in cui vedi un {table}.")
+objectAdddesc(r,'it',"Un'ampia cucina in cui vedi un {table}.")
 t=new thing('hat')
-t.addname('it','cappello')
+objectAddname(t,'it','cappello')
 t.wearable=true
-r.add(t)
+groupAdd(r,t)
 t=new thing('coat')
-t.addname('it','cappotto')
+objectAddname(t,'it','cappotto')
 t.wearable=true
-r.add(t)
+groupAdd(r,t)
 t=new thing('goose')
-t.addname('it','oca')
+objectAddname(t,'it','oca')
 t.it_femminile=true
-r.add(t)
+groupAdd(r,t)
 t=new thing('quill')
-t.addname('it','penna')
+objectAddname(t,'it','penna')
 t.it_femminile=true
-r.add(t)
+groupAdd(r,t)
 t=new supporter('table')
-t.addname('it','tavolo')
+objectAddname(t,'it','tavolo')
 t.scenery=true
-r.add(t)
+groupAdd(r,t)
 t=new container('box')
-t.addname('it','scatola')
+objectAddname(t,'it','scatola')
 t.desc="A nice [open or closed] {box}."
-t.adddesc('it',"Una bella {box} [aperto o chiuso].")
+objectAdddesc(t,'it',"Una bella {box} [aperto o chiuso].")
 t.closable=true
 t.it_femminile=true
-r.add(t)
+groupAdd(r,t)
 
 t=new exit("kitchen-east")
 t.name='east'
-t.addname("it","est")
+objectAddname(t,"it","est")
 t.roomto='garden'
-r.addexit(t)
+roomAddexit(r,t)
 
 // garden
 
 r2=new room('garden')
-r2.addname('it','giardino')
+objectAddname(r2,'it','giardino')
 r2.desc="A green garden."
-r2.adddesc('it',"Un verde giardino.")
+objectAdddesc(r2,'it',"Un verde giardino.")
 
 t=new exit("garden-west")
 t.name='west'
-t.addname("it","ovest")
+objectAddname(t,"it","ovest")
 t.roomto='kitchen'
-r2.addexit(t)
+roomAddexit(r2,t)

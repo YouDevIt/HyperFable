@@ -2,11 +2,15 @@
 body{
   padding: 32px;
   font-family: 'special',serif;
-  font-size: 18px;
+  font-size:18px;
   text-shadow: 4px 4px 4px #aaa;
   background-color: #ddb;
   user-select: none;
 }
+
+p{line-height: 150%;}
+
+a{text-decoration: none;}
 
 .flag{
   box-shadow:4px 4px 4px #aaa;
@@ -22,14 +26,21 @@ input[type="file"] {
   display: none;
 }
 .custom-file-upload {
-  font-family: arial;
+  font-family:arial;
   font-size: 13px;
   border: 2px solid #000;
   background-color: #ddd;
   display: inline-block;
-  padding: 2px;
   cursor: pointer;
+  padding: 1px;
   box-shadow:4px 4px 4px #aaa;
+}
+.custom-file-upload:hover{background-color:#f88}
+.custom-file-upload:active{
+  color:#fff;
+  background-color:#f00;
+  transform:translateX(4px) translateY(4px);
+  box-shadow:none;
 }
 
 .action{
