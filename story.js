@@ -5,11 +5,32 @@ var i,t,r,r2
 // intro
 
 i=new intro()
-i.name='Example Story'
-objectAddname(i,"it","Storia d'esempio")
+i.name='The Library'
+objectAddname(i,"it","La Biblioteca")
 i.it_femminile=true
-i.desc='A simple example<br>by Leonardo Boselli'
-objectAdddesc(i,"it","Un semplice esempio<br>di Leonardo Boselli")
+i.desc='A story about stories by Leonardo Boselli<p>\
+    <blockquote><i>"&nbsp;We do not realize it, but our wealth compared\
+    to the illiterates (or those who, who are literate, do not read)\
+    is that they are living and will live only their life and we have\
+    lived many of them. We remember, together with our childhood\
+    games, those of Proust, we yearned for our love but also for\
+    that of Pyramus and Thisbe, we assimilated something of the\
+    wisdom of Solon, we shivered for certain windy nights in\
+    Saint Helena and we we repeat, together with the fairy\
+    tale that the grandmother told us, the one that\
+    Sherazade had told.&nbsp;"<div align="right">Umberto&nbsp;Eco\
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div></i></blockquote>'
+objectAdddesc(i,"it",'Una storia sulle storie di Leonardo Boselli<p>\
+    <blockquote><i>"&nbsp;Non ce ne rendiamo conto, ma la nostra ricchezza\
+    rispetto all’analfabeta (o di chi, alfabeta, non legge) è che lui sta\
+    vivendo e vivrà solo la sua vita e noi ne abbiamo vissuto moltissime.\
+    Ricordiamo, insieme ai nostri giochi d’infanzia, quelli di Proust,\
+    abbiamo spasimato per il nostro amore ma anche per quello di Piramo\
+    e Tisbe, abbiamo assimilato qualcosa della saggezza di Solone,\
+    abbiamo rabbrividito per certe notti di vento a Sant’Elena e ci ripetiamo,\
+    insieme alla fiaba che ci ha raccontato la nonna, quella\
+    che aveva raccontato Sherazade.&nbsp;"<div align="right">Umberto&nbsp;Eco\
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div></i></blockquote>')
 t=new exit("Start")
 objectAddname(t,"it","Inizia")
 t.roomto='kitchen'
