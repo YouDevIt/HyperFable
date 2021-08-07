@@ -37,7 +37,7 @@ function choutline(el,newstr){
 
 function x(sentence,obj1,obj2){
   if(isString(sentence))
-    return sentence
+    return decode(langtag,sentence,obj1,obj2)
   var lan=langtag
   var ret=sentence[lan]
   if(!ret){
@@ -47,6 +47,12 @@ function x(sentence,obj1,obj2){
   return decode(lan,ret,obj1,obj2)
 }
 function decode(lan,txt,obj1,obj2){
+  txt=txt.replaceAll(/\[arg\.([^\]]+)\]/g,function(match,p1){
+    return x(obj1[p1]||"",obj1)
+  })
+  txt=txt.replaceAll(/\[arg2\.([^\]]+)\]/g,function(match,p1){
+    return x(obj2[p1]||"",obj2)
+  })
   txt=txt.replaceAll(/\[([^\]]+)\]/g,function(match,p1){
     switch(lan){
       case 'en':
@@ -133,6 +139,8 @@ function decode_it(p1,obj1,obj2){
       return o.it_femminile?
         (o.it_plurale?'e':'a'):
         (o.it_plurale?'i':'o')
+    case 'by':
+      return 'di'
     case 'aperto o chiuso':
       return o.closed?'chius'+decode_it('o',o):'apert'+decode_it('o',o)
     default:
@@ -455,36 +463,37 @@ var it={
 
 //// world model
 
-function intro(){
-  room.call(this,'@intro')
+function Intro(){
+  Room.call(this,'@intro')
   this.name="Untitled"
   this.author="Anonymous"
+  this.email=""
   this.subtitle=""
   this.blurb=""
   this.IFID=""
-  this.date=""
   this.release=""
+  this.date=""
+  this.desc="[arg.subtitle] [by] <a href='mailto:[arg.email]'>[arg.author]</a><p>Release [arg.release] / [arg.date] / HyperFable 1.0"
 }
 
-function world(){
+function World(){
   this.loc='@intro'
   this.objects={void:{id:'void',name:'void',loc:'void',objects:['void']}}
   this.carried=[]
   this.worn=[]
 }
-function worldAdd(world,obj){world.objects[obj.id]=obj}
 
-var world=new world()
+var world=new World()
 
-function object(id,type){
+function Object(id,type){
   this.id=id
-  worldAdd(world,this)
-  this.type=type?type:'object'
+  world.objects[id]=this
+  this.type=type||'object'
   this.name=id
   this.desc=w.Nospecial
   this.loc='void'
 }
-function objectAddprop(obj,prop,newlang,newprop){
+function addProp(obj,prop,newlang,newprop){
   if(isString(obj[prop])){
     var temp=obj[prop]
     obj[prop]={}
@@ -492,70 +501,75 @@ function objectAddprop(obj,prop,newlang,newprop){
   }
   obj[prop][newlang]=newprop
 }
-function objectAddname(obj,newlang,newname){
-  objectAddprop(obj,'name',newlang,newname)
+function addName(obj,newlang,newname){
+  addProp(obj,'name',newlang,newname)
 }
-function objectAdddesc(obj,newlang,newdesc){
-  objectAddprop(obj,'desc',newlang,newdesc)
+function addDesc(obj,newlang,newdesc){
+  addProp(obj,'desc',newlang,newdesc)
 }
 
-function group(id,type){
-  object.call(this,id,type?type:'group')
+function Group(id,type){
+  Object.call(this,id,type||'group')
   this.objects=[]
 }
-function groupAdd(group,obj){
+function addObj(group,obj){
   group.objects.push(obj.id)
   obj.loc=group.id
 }
 
-function person(id){
-  group.call(this,id,'person')
+function Person(id){
+  Group.call(this,id,'person')
   this.wears=[]
 }
 
-function room(id){
-  group.call(this,id,'room')
+function Room(id){
+  Group.call(this,id,'room')
   this.fixedinplace=true
   this.exits=[]
 }
-function roomAddexit(room,obj){
-  room.exits.push(obj.id)
-  obj.loc=room.id
+
+function Exit(id,room,roomto){
+  Object.call(this,id,'exit')
+  this.roomto=roomto||'void'
+  room.exits.push(this.id)
+  this.loc=room.id
 }
 
-function exit(id){
-  object.call(this,id,'exit')
-  this.roomto='void'
+function Thing(id){
+  Object.call(this,id,'thing')
 }
 
-function thing(id){
-  object.call(this,id,'thing')
-  this.movable=true
-}
-
-function container(id){
-  group.call(this,id,'container')
+function Container(id){
+  Group.call(this,id,'container')
   this.keys=[]
 }
 
-function vehicle(id){
-  container.call(this,id,'vehicle')
+function Vehicle(id){
+  Container.call(this,id,'vehicle')
   this.enterable=true
 }
 
-function supporter(id){
-  group.call(this,id,'supporter')
+function Supporter(id){
+  Group.call(this,id,'supporter')
 }
 
-function mount(id){
-  supporter.call(this,id,'mount')
+function Mount(id){
+  Supporter.call(this,id,'mount')
 }
 
-function getobj(id){return world.objects[id]}
-function getroom(){
-  var oloc=getobj(world.loc)
+function Text(id){
+  Object.call(this,id,'text')
+}
+
+function Topic(id){
+  Object.call(this,id,'topic')
+}
+
+function getObj(id){return world.objects[id]}
+function getRoom(){
+  var oloc=getObj(world.loc)
   while(oloc.type!='room')
-    oloc=getobj(oloc.loc)
+    oloc=getObj(oloc.loc)
   return oloc
 }
 
@@ -584,7 +598,7 @@ function loadWorld(filename){
     if(list=="")
       return msg(x(w.Error))
     str+=list+">"
-    filename=window.prompt(str,lastSave?lastSave:"")
+    filename=window.prompt(str,lastSave||"")
     if(!filename)
       return msg(x(w.Error))
   }
@@ -659,22 +673,22 @@ function youwear(){
 function menulist(array){
   var ret=""
   for(var ct=0;ct<array.length;ct++)
-    ret+=x(w.object,getobj(array[ct]))+" "
+    ret+=x(w.object,getObj(array[ct]))+" "
   return ret
 }
 function listobjs(argarray){
   var array=[]
   for(const item of argarray)
-    if(!getobj(item).scenery)
+    if(!getObj(item).scenery)
       array.push(item)
   if(array.length==0)
     return x(w.none)
-  ret=x(w.object,getobj(array[0]))
+  ret=x(w.object,getObj(array[0]))
   if(array.length==1)
     return ret
   for(var ct=1;ct<array.length-1;ct++)
-    ret+=", "+x(w.object,getobj(array[ct]))
-  ret+=x(w.and)+x(w.object,getobj(array[array.length-1]))
+    ret+=", "+x(w.object,getObj(array[ct]))
+  ret+=x(w.and)+x(w.object,getObj(array[array.length-1]))
   return ret
 }
 function listactions(array,obj){
@@ -691,27 +705,28 @@ function listactions(array,obj){
 function anlistobjs(argarray){
   var array=[]
   for(const item of argarray)
-    if(!getobj(item).scenery)
+    if(!getObj(item).scenery)
       array.push(item)
   if(array.length==0)
     return x(w.nothing)
-  ret=x(w.anobject,getobj(array[0]))
+  ret=x(w.anobject,getObj(array[0]))
   if(array.length==1)
     return ret
   for(var ct=1;ct<array.length-1;ct++)
-    ret+=", "+x(w.anobject,getobj(array[ct]))
-  ret+=x(w.and)+x(w.anobject,getobj(array[array.length-1]))
+    ret+=", "+x(w.anobject,getObj(array[ct]))
+  ret+=x(w.and)+x(w.anobject,getObj(array[array.length-1]))
   return ret
 }
 
 //// interaction
 
 function changeEditable() {
-  document.body.contentEditable = document.body.contentEditable=='true'?'false':'true'
+  document.body.contentEditable=
+    document.body.contentEditable=='true'?'false':'true'
 }
 
 function download(){
-  var filename=window.prompt(x(w.Insertfile),x(getobj('@intro').name)+'.txt')
+  var filename=window.prompt(x(w.Insertfile),x(getObj('@intro').name)+'.txt')
   if(!filename)
     return msg(x(w.Error))
   var dataStr = "data:text/plain;charset=utf-8,"+encodeURIComponent(JSON.stringify(world))
@@ -753,7 +768,7 @@ function isvisible(obj){
   while(true){
     if(loc=='@carried'||loc=='@worn'||loc==world.loc)
       return true
-    var oloc=getobj(loc)
+    var oloc=getObj(loc)
     if(oloc.type=='room')
       return false
     if(oloc.type=='supporter'||oloc.type=='mount')
@@ -768,7 +783,7 @@ function isvisible(obj){
 }
 
 function dragndrop(source,drain){
-  var sobj=getobj(source)
+  var sobj=getObj(source)
   if(!isvisible(sobj))
     return msg(x(w.Cantsee,sobj))
   if(sobj.scenery||sobj.fixedinplace)
@@ -791,7 +806,7 @@ function dragndrop(source,drain){
       msg(x(w.Youremove,sobj))
       return showAll()
     }
-    var org=getobj(loc)
+    var org=getObj(loc)
     remove(org.objects,sobj.id)
     world.carried.push(sobj.id)
     sobj.loc='@carried'
@@ -809,7 +824,7 @@ function dragndrop(source,drain){
       msg(x(w.Youremove,sobj))
       return showAll()
     }
-    var org=getobj(loc)
+    var org=getObj(loc)
     remove(org.objects,sobj.id)
     world.carried.push(sobj.id)
     sobj.loc='@carried'
@@ -829,7 +844,7 @@ function dragndrop(source,drain){
     }
     if(loc=='@worn')
       return msg(x(w.Alreadywear,sobj))
-    var org=getobj(loc)
+    var org=getObj(loc)
     remove(org.objects,sobj.id)
     world.carried.push(sobj.id)
     sobj.loc='@carried'
@@ -843,7 +858,7 @@ function dragndrop(source,drain){
     msg(x(w.Youwear,sobj))
     return showAll()
   }
-  var dobj=getobj(drain)
+  var dobj=getObj(drain)
   if(!isvisible(dobj))
     return msg(x(w.Cantsee,dobj))
   if(sobj==dobj)
@@ -852,20 +867,20 @@ function dragndrop(source,drain){
     case 'room':
       if(sobj.loc=='@carried'){
         remove(world.carried,sobj.id)
-        groupAdd(dobj,sobj)
+        addObj(dobj,sobj)
         msg(x(w.Youdrop,sobj,dobj))
         return showAll()
       }
       if(sobj.loc=='@worn'){
         remove(world.worn,sobj.id)
-        groupAdd(dobj,sobj)
+        addObj(dobj,sobj)
         msg(x(w.Youremove,sobj))
         msg(x(w.Youdrop,sobj,dobj))
         return showAll()
       }
-      var sloc=getobj(sobj.loc)
+      var sloc=getObj(sobj.loc)
       remove(sloc.objects,sobj.id)
-      groupAdd(dobj.sobj)
+      addObj(dobj.sobj)
       msg(x(w.Youtake,sobj,sloc))
       msg(x(w.Youputin,sobj,dobj))
       return showAll()
@@ -874,40 +889,40 @@ function dragndrop(source,drain){
         return msg(x(w.Cantdo)+' '+x(w.Itsclosed,dobj))
       if(sobj.loc=='@carried'){
         remove(world.carried,sobj.id)
-        groupAdd(dobj,sobj)
+        addObj(dobj,sobj)
         msg(x(w.Youputin,sobj,dobj))
         return showAll()
       }
       if(sobj.loc=='@worn'){
         remove(world.worn,sobj.id)
-        groupAdd(dobj,sobj)
+        addObj(dobj,sobj)
         msg(x(w.Youremove,sobj))
         msg(x(w.Youputin,sobj,dobj))
         return showAll()
       }
-      var sloc=getobj(sobj.loc)
+      var sloc=getObj(sobj.loc)
       remove(sloc.objects,sobj.id)
-      groupAdd(dobj,sobj)
+      addObj(dobj,sobj)
       msg(x(w.Youtake,sobj,sloc))
       msg(x(w.Youputin,sobj,dobj))
       return showAll()
     case 'supporter':
       if(sobj.loc=='@carried'){
         remove(world.carried,sobj.id)
-        groupAdd(dobj,sobj)
+        addObj(dobj,sobj)
         msg(x(w.Youputon,sobj,dobj))
         return showAll()
       }
       if(sobj.loc=='@worn'){
         remove(world.worn,sobj.id)
-        groupAdd(dobj,sobj)
+        addObj(dobj,sobj)
         msg(x(w.Youremove,sobj))
         msg(x(w.Youputon,sobj,dobj))
         return showAll()
       }
-      var sloc=getobj(sobj.loc)
+      var sloc=getObj(sobj.loc)
       remove(sloc.objects,sobj.id)
-      groupAdd(dobj,sobj)
+      addObj(dobj,sobj)
       msg(x(w.Youtake,sobj,sloc))
       msg(x(w.Youputon,sobj,dobj))
       return showAll()
@@ -923,7 +938,7 @@ function clickon(ev){
     var words=ev.target.id.split(' ')
     return perform(words[0],words[1],words[2])
   }
-  var obj=getobj(ev.target.id)
+  var obj=getObj(ev.target.id)
   switch(obj.type){
     case 'exit':
       return gothrough(obj)
@@ -936,7 +951,7 @@ function gothrough(obj){
     return msg(x(w.Cantseeexit,obj))
   var oldloc=world.loc
   world.loc=obj.roomto
-  var room=getobj(world.loc)
+  var room=getObj(world.loc)
   if(oldloc.charAt(0)!="@")
     msg(x(w.Yougoto,room))
   showAll()
@@ -944,7 +959,7 @@ function gothrough(obj){
 function examine(obj){
   if(!isvisible(obj))
     return msg(x(w.Cantsee,obj))
-  var str=mark(x(obj.desc?obj.desc:w.Nospecial,obj))
+  var str=mark(x(obj.desc||w.Nospecial,obj))
   str+=suggestactions(obj)
   if(obj.objects&&obj.objects.length>0)
     if(obj.type!='container'||obj.transparent||!obj.closed)
@@ -984,7 +999,7 @@ function perform(action,id,id2){
     case 'wear':
       return dragndrop(id,'@worn')
     case 'drop':
-      return dragndrop(id,getroom().id)
+      return dragndrop(id,getRoom().id)
     case 'remove':
       return dragndrop(id,'@carried')
     case 'open':
@@ -994,7 +1009,7 @@ function perform(action,id,id2){
   }
 }
 function doopen(id){
-  var obj=getobj(id)
+  var obj=getObj(id)
   if(!obj.closed)
     return msg(x(w.Alreadyopen,obj))
   if(!obj.closable)
@@ -1003,7 +1018,7 @@ function doopen(id){
   msg(x(obj.transparent?w.Youopen:w.Youopenrevealing,obj,obj.objects))
 }
 function doclose(id){
-  var obj=getobj(id)
+  var obj=getObj(id)
   if(obj.closed)
     return msg(x(w.Alreadyclosed,obj))
   if(!obj.closable)
@@ -1013,9 +1028,9 @@ function doclose(id){
 }
 
 function showRoom(){
-  var room=getroom()
+  var room=getRoom()
   var str='<h2 id="'+room.id+'" draggable="false" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)">'+cap(x(room.name))+'</h2><p>'
-    +mark(x(room.desc))
+    +mark(x(room.desc,room))
   if(room.objects.length>0)
     str+="<p>"+yousee(room)
   str+="<p>"+(room.id.charAt(0)=='@'?menulist(room.exits):listexits(room))
@@ -1069,43 +1084,46 @@ function loadfile(ev) {
 
 //// tutorial
 
-var r=new room('@help')
+var r=new Room('@help')
 r.name="tutorial room"
-objectAddname(r,'it','stanza del tutorial')
+addName(r,'it','stanza del tutorial')
 r.itfemminile=true
-r.desc="This story was created using <b><a href='https://github.com/YouDevIt/HyperFable'>HyperFable</a></b>, an <i>HTML5</i> interface for <i>Interactive Fiction</i> works, written by <a href='mailto:leonardo.boselli@youdev.it'>Leonardo Boselli</a>.<p>The main actions to play are:<ul><li>Click on the highlighted words to perform the default action, i.e. to examine the corresponding objects, move through an exit, etc.</li><li>Drag and drop the words to move the objects around, apply actions, and so on.<br>You can even drag verbs and drop words also on 'Inventory', or the room name. Try different combinations!</li></ul>"
-objectAdddesc(r,'it',"Questa storia è stata creata con <b><a href='https://github.com/YouDevIt/HyperFable'>HyperFable</a></b>, un'interfaccia <i>HTML5</i> per lavori di <i>Narrativa Interattiva</i> works, scritta da <a href='mailto:leonardo.boselli@youdev.it'>Leonardo Boselli</a>.<p>Le principali azione per giocare sono:<ul><li>Clicca sulle parole evidenziate per effettuare l'azione di base, cioè esaminare gli oggetti corrispondenti, muoverti attraverso un'uscita, ecc.</li><li>Trascina e rilascia (drag & drop) le parole per cambiare la posizione degli oggetti, applicare azioni e così via.<br>Puoi anche trascinare verbi e spostare parole anche su 'Inventario' or sul nome della stanza. Tenta diverse combinazioni!</li></ul>")
-var t=new thing('@help-cube')
-t.name="cube"
-objectAddname(t,'it','cubo')
-t.desc="A small {@help-cube}. <i>Drag it on the inventory or on other objects.</i>"
-objectAdddesc(t,'it',"Una piccolo {@help-cube}. <i>Trascinalo sull'inventario o su altri oggetti.</i>")
-groupAdd(r,t)
-t=new thing('@help-hat')
-t.name="hat"
-objectAddname(t,'it','cappello')
+r.desc={
+  en:"This story was created using <b><a href='https://github.com/YouDevIt/HyperFable'>HyperFable</a></b>, an <i>HTML5</i> interface for <i>Interactive Fiction</i> works, written by <a href='mailto:leonardo.boselli@youdev.it'>Leonardo Boselli</a>.<p>The main actions to play are:<ul><li>Click on the highlighted words to perform the default action, i.e. to examine the corresponding objects, move through an exit, etc.</li><li>Drag and drop the words to move the objects around, apply actions, and so on.<br>You can even drag verbs and drop words on 'Inventory', or the room name. Try different combinations!</li></ul>",
+  it:"Questa storia è stata creata con <b><a href='https://github.com/YouDevIt/HyperFable'>HyperFable</a></b>, un'interfaccia <i>HTML5</i> per lavori di <i>Narrativa Interattiva</i> works, scritta da <a href='mailto:leonardo.boselli@youdev.it'>Leonardo Boselli</a>.<p>Le principali azione per giocare sono:<ul><li>Clicca sulle parole evidenziate per effettuare l'azione di base, cioè esaminare gli oggetti corrispondenti, muoverti attraverso un'uscita, ecc.</li><li>Trascina e rilascia (drag & drop) le parole per cambiare la posizione degli oggetti, applicare azioni e così via.<br>Puoi anche trascinare verbi e spostare parole su 'Inventario' o sul nome della stanza. Tenta diverse combinazioni!</li></ul>"
+}
+var t=new Thing('@help-cube')
+t.name={en:"cube",it:"cubo"}
+t.desc={
+  en:"A small {@help-cube}. <i>Drag it on the inventory or on other objects.</i>",
+  it:"Un piccolo {@help-cube}. <i>Trascinalo sull'inventario o su altri oggetti.</i>"
+}
+addObj(r,t)
+t=new Thing('@help-hat')
+t.name={en:"hat",it:"cappello"}
 t.wearable=true
-t.desc= "A {@help-hat}. <i>Drag it twice on the inventory to wear it.</i>"
-objectAdddesc(t,'it',"Un {@help-hat}. <i>Trascinalo due volte sull'inventario per indossarlo.</i>")
-groupAdd(r,t)
-t=new supporter('@help-table')
-t.name="table"
-objectAddname(t,'it','tavolo')
-t.desc= "A {@help-table}. <i>Drag objects on it.</i>"
-objectAdddesc(t,'it',"Un {@help-table}. <i>Trascina oggetti su di esso.</i>")
+t.desc={
+  en:"A {@help-hat}. <i>Drag it twice on the inventory to wear it.</i>",
+  it:"Un {@help-hat}. <i>Trascinalo due volte sull'inventario per indossarlo.</i>"
+}
+addObj(r,t)
+t=new Supporter('@help-table')
+t.name={en:"table",it:"tavolo"}
+t.desc={
+  en:"A {@help-table}. <i>Drag objects on it.</i>",
+  it:"Un {@help-table}. <i>Trascina oggetti su di esso.</i>"
+}
 t.fixedinplace=true
-groupAdd(r,t)
-t=new container('@help-box')
-t.name="box"
-objectAddname(t,'it','scatola')
-t.desc="An open {@help-box}. <i>Drag objects on it.</i>"
-objectAdddesc(t,'it',"Una {@help-box} aperta. <i>Trascina oggetti su di essa.</i>")
+addObj(r,t)
+t=new Container('@help-box')
+t.name={en:"box",it:"scatola"}
+t.desc={
+  en:"An open {@help-box}. <i>Drag objects on it.</i>",
+  it:"Una {@help-box} aperta. <i>Trascina oggetti su di essa.</i>"
+}
 t.closed=false
 t.openable=false
 t.it_femminile=true
-groupAdd(r,t)
-t=new exit("@help-exit")
-t.name='Back to the game'
-objectAddname(t,"it","Torna al gioco")
-t.roomto='@intro'
-roomAddexit(r,t)
+addObj(r,t)
+t=new Exit("@help-exit",r,'@intro')
+t.name={en:'Back to the game',it:'Torna al gioco'}
