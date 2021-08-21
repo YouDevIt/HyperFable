@@ -18,9 +18,11 @@ const langdef='en'
 var langtag='en'
 
 function changelang(code){
+  if(langtag==code)
+    return msg(x(w.Langalready))
   langtag=code
-  choutline('$en',code=="en"?"solid red;":"solid black;")
-  choutline('$it',code=="it"?"solid red;":"solid black;")
+  flagtoggle('$en')
+  flagtoggle('$it')
   getel("$savefile").innerHTML=x(w.SAVEFILE)
   getel("$loadfile").innerHTML=x(w.LOADFILE)
   getel("$save").innerHTML=x(w.SAVE)
@@ -29,36 +31,36 @@ function changelang(code){
   showAll()
   msg(x(w.Langchanged))
 }
-function choutline(el,newstr){
-  var str=getel(el).style.cssText
-  var idx= str.indexOf("outline:")
-  getel(el).style.cssText=str.substring(0,idx+9)+newstr
+function flagtoggle(el){
+  var flag=getel(el)
+  flag.classList.toggle('flag-norm')
+  flag.classList.toggle('flag-high')
 }
 
-function x(sentence,obj1,obj2){
+function x(sentence,obj1,obj2,dec1,dec2){
   if(isString(sentence))
-    return decode(langtag,sentence,obj1,obj2)
+    return decode(langtag,sentence,obj1,obj2,dec1,dec2)
   var lan=langtag
   var ret=sentence[lan]
   if(!ret){
     lan=langdef 
     ret=sentence[lan]
   }
-  return decode(lan,ret,obj1,obj2)
+  return decode(lan,ret,obj1,obj2,dec1,dec2)
 }
-function decode(lan,txt,obj1,obj2){
+function decode(lan,txt,obj1,obj2,dec1,dec2){
   txt=txt.replaceAll(/\[arg\.([^\]]+)\]/g,function(match,p1){
-    return x(obj1[p1]||"",obj1)
+    return x(obj1[p1]||"",obj1,null,dec1,dec2)
   })
   txt=txt.replaceAll(/\[arg2\.([^\]]+)\]/g,function(match,p1){
-    return x(obj2[p1]||"",obj2)
+    return x(obj2[p1]||"",obj2,null,dec1,dec2)
   })
   txt=txt.replaceAll(/\[([^\]]+)\]/g,function(match,p1){
     switch(lan){
       case 'en':
-        return decode_en(p1,obj1,obj2)
+        return decode_en(p1,obj1,obj2,dec1,dec2)
       case 'it':
-        return decode_it(p1,obj1,obj2)
+        return decode_it(p1,obj1,obj2,dec1,dec2)
       default:
         return p1
     }
@@ -68,33 +70,39 @@ function decode(lan,txt,obj1,obj2){
 
 // english transform rules
 
-function decode_en(p1,obj1,obj2){
+function decode_en(p1,obj1,obj2,dec1,dec2){
   var o=obj1
+  var dec=dec1
   if(p1.charAt(p1.length-1)=='2'){
     p1=p1.substring(0,p1.length-1)
     o=obj2
+    dec=dec2
   }
   switch(p1){
     case 'The object':
-      return cap(en.detart(o))+innerobject(o)
+      return cap(en.detart(o))+innerobject(o,dec)
     case 'the object':
-      return en.detart(o)+innerobject(o)
+      return en.detart(o)+innerobject(o,dec)
     case 'an object':
-      return en.indart(o)+innerobject(o)
+      return en.indart(o)+innerobject(o,dec)
     case 'object':
-      return innerobject(o)
+      return innerobject(o,dec)
     case 'is':
       return o.en_plural?'are':'is'
     case 'a list of objects':
-      return anlistobjs(o)
+      return alistobjs(o,dec2)
+    case 'a list of objects no scenery':
+      return alistobjsnoscenery(o,dec)
     case 'list of objects':
-      return listobjs(o)
+      return listobjs(o,dec)
     case "list of actions":
       return listactions(obj1,obj2)
     case 'it':
       return o.en_plural?'them':o.en_male?'him':o.en_female?'her':'it'
     case 'open or closed':
       return o.closed?'closed':'open'
+    case 'on or off':
+      return o.switchedon?'switched on':'switched off'
     default:
       return p1
   }
@@ -102,35 +110,39 @@ function decode_en(p1,obj1,obj2){
 
 // italian transform rules
 
-function decode_it(p1,obj1,obj2){
+function decode_it(p1,obj1,obj2,dec1,dec2){
   var o=obj1
+  var dec=dec1
   if(p1.charAt(p1.length-1)=='2'){
     p1=p1.substring(0,p1.length-1)
     o=obj2
+    dec=dec2
   }
   switch(p1){
     case "L'oggetto":
-      return cap(it.artdet(o))+innerobject(o)
+      return cap(it.artdet(o))+innerobject(o,dec)
     case "l'oggetto":
-      return it.artdet(o)+innerobject(o)
+      return it.artdet(o)+innerobject(o,dec)
     case "nell'oggetto":
-      return it.prepin(o)+innerobject(o)
+      return it.prepin(o)+innerobject(o,dec)
     case "Nell'oggetto":
-      return cap(it.prepin(o))+innerobject(o)
+      return cap(it.prepin(o))+innerobject(o,dec)
     case "sull'oggetto":
-      return it.prepsu(o)+innerobject(o)
+      return it.prepsu(o)+innerobject(o,dec)
     case "Sull'oggetto":
-      return cap(it.prepsu(o))+innerobject(o)
+      return cap(it.prepsu(o))+innerobject(o,dec)
     case "dall'oggetto":
-      return it.prepda(o)+innerobject(o)
+      return it.prepda(o)+innerobject(o,dec)
     case "un oggetto":
-      return it.artind(o)+innerobject(o)
+      return it.artind(o)+innerobject(o,dec)
     case "oggetto":
-      return innerobject(o)
+      return innerobject(o,dec)
     case "una lista di oggetti":
-      return anlistobjs(o)
+      return alistobjs(o,dec)
+    case "una lista di oggetti non scenici":
+      return alistobjsnoscenery(o,dec)
     case "lista di oggetti":
-      return listobjs(o)
+      return listobjs(o,dec)
     case "lista di azioni":
       return listactions(obj1,obj2)
     case 'è':
@@ -143,6 +155,8 @@ function decode_it(p1,obj1,obj2){
       return 'di'
     case 'aperto o chiuso':
       return o.closed?'chius'+decode_it('o',o):'apert'+decode_it('o',o)
+    case 'acceso o spento':
+      return o.switchedon?'acces'+decode_it('o',o):'spent'+decode_it('o',o)
     default:
       return p1
   }
@@ -155,6 +169,10 @@ var w={
     en:"Now the story is in English.",
     it:"Ora la storia è in italiano.",
   },
+  Langalready:{
+    en:"The story is already in English.",
+    it:"La storia è già in italiano.",
+  },
   Done:{en:"Task completed.",it:"Compito completato."},
   Error:{en:"An error has occurred.",it:"Si è verificato un errore."},
   saved:{en:"saved",it:"salvato"},
@@ -166,9 +184,21 @@ var w={
   Nothingtodo:{en:"Nothing to do.",it:"Niente da fare."},
   Youcando:{en:"(You can [list of actions])",it:"(Puoi [lista di azioni])"},
   Cantdo:{en:"You can't do that.",it:"Non puoi farlo."},
+  Cantputon:{
+    en:"You can't put [the object] on [the object2].",
+    it:"Non puoi mettere [l'oggetto] [sull'oggetto2]."
+  },
+  Cantputonself:{
+    en:"You can't put [the object] on [it]self.",
+    it:"Non puoi mettere [l'oggetto] su se stess[o]."
+  },
   Cantsee:{
     en:"Here you can't see [the object].",
     it:"Qui non vedi [l'oggetto]."
+  },
+  Cantseethat:{
+    en:"Here you can see nothing like that.",
+    it:"Qui non vedi nulla di simile."
   },
   Cantseeexit:{
     en:"Here you can't see the exit [object].",
@@ -178,13 +208,61 @@ var w={
     en:"You can't take [the object].",
     it:"Non puoi prendere [l'oggetto]."
   },
-  Alreadyhold:{
-    en:"You already hold [the object].",
+  Dontcarry:{
+    en:"You don't carry [the object].",
+    it:"Non hai [l'oggetto]."
+  },
+  Alreadycarry:{
+    en:"You already carry [the object].",
     it:"Porti già [l'oggetto]."
+  },
+  Alreadyin:{
+    en:"[The object] [is] already in [the object2].",
+    it:"[L'oggetto] [è] già [nell'oggetto2]."
+  },
+  Alreadyon:{
+    en:"[The object] [is] already on [the object2].",
+    it:"[L'oggetto] [è] già [sull'oggetto2]."
+  },
+  Alreadyswitchedon:{
+    en:"[The object] [is] already switched on.",
+    it:"[L'oggetto] [è] già acces[o]."
+  },
+  Alreadyswitchedoff:{
+    en:"[The object] [is] already switched off.",
+    it:"[L'oggetto] [è] già spent[o]."
+  },
+  Cantswitchon:{
+    en:"You can't switch on [the object].",
+    it:"Non puoi accendere [l'oggetto]."
+  },
+  Cantswitchoff:{
+    en:"You can't switch off [the object].",
+    it:"Non puoi spegnere [l'oggetto]."
+  },
+  Cantread:{
+    en:"You can't read [the object].",
+    it:"Non puoi leggere [l'oggetto]."
+  },
+  Canteat:{
+    en:"You can't eat [the object].",
+    it:"Non puoi mangiare [l'oggetto]."
+  },
+  Cantpush:{
+    en:"You can't push [the object].",
+    it:"Non puoi spingere [l'oggetto]."
+  },
+  Cantpushto:{
+    en:"You can't push [the object] to [object2].",
+    it:"Non puoi spingere [l'oggetto] a [oggetto2]."
   },
   Cantwear:{
     en:"You can't wear [the object].",
     it:"Non puoi indossare [l'oggetto]."
+  },
+  Dontwear:{
+    en:"You don't wear [the object].",
+    it:"Non indossi [l'oggetto]."
   },
   Alreadywear:{
     en:"You already wear [the object].",
@@ -203,8 +281,8 @@ var w={
     it:"Vai verso [l'oggetto]."
   },
   Seeing:{
-    en:"Here you can see [a list of objects].",
-    it:"Qui puoi vedere [una lista di oggetti]."
+    en:"Here you can see [a list of objects no scenery].",
+    it:"Qui puoi vedere [una lista di oggetti non scenici]."
   },
   Exits:{
     en:"Visible exits: [list of objects].",
@@ -222,9 +300,17 @@ var w={
     en:"You carry [a list of objects].",
     it:"Porti [una lista di oggetti].",
   },
+  Carringand:{
+    en:"You carry [a list of objects]",
+    it:"Porti [una lista di oggetti]",
+  },
   Wearing:{
     en:"You wear [a list of objects].",
     it:"Indossi [una lista di oggetti]."
+  },
+  andwearing:{
+    en:" and you wear [a list of objects].",
+    it:" e indossi [una lista di oggetti]."
   },
   Youwear:{
     en:"You wear [the object].",
@@ -250,6 +336,26 @@ var w={
     en:"You drop [the object] in [the object2].",
     it:"Hai lasciato [l'oggetto] [nell'oggetto2].",
   },
+  Youeat:{
+    en:"You eat [the object].",
+    it:"Hai mangiato [l'oggetto]."
+  },
+  Youpushto:{
+    en:"You push [the object] to [object2].",
+    it:"Hai spinto [l'oggetto] a [oggetto2]."
+  },
+  Youswitchon:{
+    en:"You switch on [the object].",
+    it:"Hai acceso [l'oggetto]."
+  },
+  Youswitchoff:{
+    en:"You switch off [the object].",
+    it:"Hai spento [l'oggetto]."
+  },
+  Youread:{
+    en:"On [the object] you read:<br>",
+    it:"[Sull'oggetto] leggi:<br>"
+  },
   Youcarrynothing:{
     en:"You carry nothing.",
     it:"Non porti nulla."
@@ -268,12 +374,17 @@ var w={
   take:{en:"take [it]",it:"prenderl[o]"},
   drop:{en:"drop [it]",it:"lasciarl[o]"},
   wear:{en:"wear [it]",it:"indossarl[o]"},
+  eat:{en:"eat [it]",it:"mangiarl[o]"},
+  read:{en:"read [it]",it:"leggerl[o]"},
+  switchon:{en:"switch on [it]",it:"accenderl[o]"},
+  switchoff:{en:"switch off [it]",it:"spegnerl[o]"},
   remove:{en:"remove [it]",it:"toglierl[o]"},
   open:{en:"open [it]",it:"aprirl[o]"},
   Alreadyopen:{
     en:"[The object] [is] already open.",
     it:"[L'oggetto] [è] già apert[o]"
   },
+  onoroff:{en:"[on or off]",it:"[acceso o spento]"},
   openorclosed:{en:"[open or closed]",it:"[aperto o chiuso]"},
   Youopen:{
     en:"You open [the object].",
@@ -463,6 +574,19 @@ var it={
 
 //// world model
 
+var worlds={}
+
+function World(id){
+  this.loc='@intro'
+  this.objects={'@offstage':{id:'@offstage',name:'void',loc:'@offstage',objects:['@offstage']}}
+  this.offstage=[]
+  this.carried=[]
+  this.worn=[]
+  worlds[id]=this
+}
+
+var world=new World('@world')
+
 function Intro(){
   Room.call(this,'@intro')
   this.name="Untitled"
@@ -473,17 +597,9 @@ function Intro(){
   this.IFID=""
   this.release=""
   this.date=""
+  this.code=""
   this.desc="[arg.subtitle] [by] <a href='mailto:[arg.email]'>[arg.author]</a><p>Release [arg.release] / [arg.date] / HyperFable 1.0"
 }
-
-function World(){
-  this.loc='@intro'
-  this.objects={void:{id:'void',name:'void',loc:'void',objects:['void']}}
-  this.carried=[]
-  this.worn=[]
-}
-
-var world=new World()
 
 function Object(id,type){
   this.id=id
@@ -491,7 +607,7 @@ function Object(id,type){
   this.type=type||'object'
   this.name=id
   this.desc=w.Nospecial
-  this.loc='void'
+  this.loc='@offstage'
 }
 function addProp(obj,prop,newlang,newprop){
   if(isString(obj[prop])){
@@ -528,11 +644,16 @@ function Room(id){
   this.exits=[]
 }
 
-function Exit(id,room,roomto){
-  Object.call(this,id,'exit')
-  this.roomto=roomto||'void'
+function Exit(id,room,roomto,type){
+  Object.call(this,id,type||'exit')
+  this.roomto=roomto||'@offstage'
   room.exits.push(this.id)
   this.loc=room.id
+}
+
+function Portal(id,room,roomto,worldto){
+  Exit.call(this,id,room,roomto,'portal')
+  this.worldto=worldto||'@world'
 }
 
 function Thing(id){
@@ -555,10 +676,6 @@ function Supporter(id){
 
 function Mount(id){
   Supporter.call(this,id,'mount')
-}
-
-function Text(id){
-  Object.call(this,id,'text')
 }
 
 function Topic(id){
@@ -584,17 +701,19 @@ function saveWorld(filename){
     if(!filename)
       return msg(x(w.Error))
   }
-  window.localStorage.setItem(TRAILER+filename,JSON.stringify(world))
+  var trailer=worlds['@world'].objects['@intro'].code||TRAILER
+  window.localStorage.setItem(trailer+filename,JSON.stringify(worlds['@world']))
   if(filename.charAt(0)!='$')
     msg('"'+filename+'" '+x(w.saved)+'.')
 }
 function loadWorld(filename){
+  var trailer=worlds['@world'].objects['@intro'].code||TRAILER
   if(!filename) {
     var str=x(w.Insertload)+" < "
     var list=""
     for(var key in window.localStorage)
-      if(key.substring(0,TRAILER.length)==TRAILER && key.charAt(TRAILER.length)!='$')
-        list+=(lastSave=key.substring(TRAILER.length))+" "
+      if(key.substring(0,trailer.length)==trailer && key.charAt(trailer.length)!='$')
+        list+=(lastSave=key.substring(trailer.length))+" "
     if(list=="")
       return msg(x(w.Error))
     str+=list+">"
@@ -602,10 +721,10 @@ function loadWorld(filename){
     if(!filename)
       return msg(x(w.Error))
   }
-  var loaded=window.localStorage.getItem(TRAILER+filename)
+  var loaded=window.localStorage.getItem(trailer+filename)
   if(!loaded)
     return msg(x(w.Error))
-  world=JSON.parse(loaded)
+  world=worlds['@world']=JSON.parse(loaded)
   showAll()
   if(filename.charAt(0)!='$')
     msg('"'+filename+'" '+x(w.loaded)+'.')
@@ -628,67 +747,114 @@ function msg(text){
 
 function cap(txt){return txt.charAt(0).toUpperCase()+txt.slice(1)}
 
-function innerobject(obj) {
+function innerobject(obj,dec) {
   var id=obj.id
   var type=obj.type
   var name=x(obj.name)
-  return innerclass(id,type,name)
-}
-function innerclass(id,type,name){
-  return '<span class="'+type+'" id="'+id+'" draggable="true" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)" onclick="clickon(event)">'+name+'</span>'
+  var effect=type
+  if(type!='room') {
+    if(dec){
+      effect+=' dec'
+      var movable=['thing','container','supporter'].indexOf(type)>=0
+      if(movable)
+        movable=!(obj.scenery||obj.fixedinplace)
+      effect+=movable?' hvr-buzz-out':' hvr-radial-out'
+    }
+  }
+  return '<span class="'+effect+'" id="'+id
+    +'" draggable="true" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)" onclick="clickon(event)">'
+    +name+'</span>'
 }
 function inneraction(actionid,obj){
   return '<span class="action" id="'+actionid+' '+obj.id+'" draggable="true" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)" onclick="clickon(event)">'+x(w[actionid],obj)+'</span>'
 }
 
-function mark(text){
+function mark(text,dec){
   text=text.replaceAll(/{([^}]+)}/g,function(match,p1){
     var obj=world.objects[p1]
-    return innerobject(obj);
+    return innerobject(obj,dec);
   })
   return text
 }
 
 // sentences
 
-function yousee(room){
-  return x(w.Seeing,room.objects)
+function yousee(room,dec){
+  return x(w.Seeing,room.objects,null,dec,dec)
 }
-function listexits(room){
-  return x(w.Exits,room.exits)
+function listexits(room,dec){
+  return x(w.Exits,room.exits,null,dec)
 }
-function inyousee(obj){
-  return x(w.Inseeing,obj,obj.objects)
+function inyousee(obj,dec1,dec2){
+  return x(w.Inseeing,obj,obj.objects,dec1,dec2)
 }
-function onyousee(obj){
-  return x(w.Onseeing,obj,obj.objects)
+function onyousee(obj,dec1,dec2){
+  return x(w.Onseeing,obj,obj.objects,dec1,dec2)
 }
-function youcarry(){
-  return x(w.Carring,world.carried)
+function youcarry(dec){
+  return x(w.Carring,world.carried,null,dec,dec)
 }
-function youwear(){
-  return x(w.Wearing,world.worn)
+function youcarryand(dec){
+  return x(w.Carringand,world.carried,null,dec,dec)
+}
+function andyouwear(dec){
+  return x(w.andwearing,world.worn,null,dec,dec)
+}
+function youwear(dec){
+  return x(w.Wearing,world.worn,null,dec,dec)
+}
+function youcarryandwear(dec){
+  if(world.carried.length>0)
+    return youcarryand(dec)+(world.worn.length>0?andyouwear(dec):'.')
+  if(world.worn.length>0)
+    return youwear(dec)
+  return x(w.Youcarrynothing)
 }
 
-function menulist(array){
-  var ret=""
+function menulist(array,dec){
+  var ret=''
   for(var ct=0;ct<array.length;ct++)
-    ret+=x(w.object,getObj(array[ct]))+" "
+    ret+=x(w.object,getObj(array[ct]),null,dec)+' '
   return ret
 }
-function listobjs(argarray){
-  var array=[]
-  for(const item of argarray)
-    if(!getObj(item).scenery)
-      array.push(item)
+function listobjs(argarray,dec){
+  var array=argarray
   if(array.length==0)
     return x(w.none)
-  ret=x(w.object,getObj(array[0]))
+  ret=x(w.object,getObj(array[0]),null,dec)
   if(array.length==1)
     return ret
   for(var ct=1;ct<array.length-1;ct++)
-    ret+=", "+x(w.object,getObj(array[ct]))
-  ret+=x(w.and)+x(w.object,getObj(array[array.length-1]))
+    ret+=', '+x(w.object,getObj(array[ct]),null,dec)
+  ret+=x(w.and)+x(w.object,getObj(array[array.length-1]),null,dec)
+  return ret
+}
+function alistobjs(argarray,dec){
+  var array=argarray
+  if(array.length==0)
+    return x(w.nothing)
+  ret=x(w.anobject,getObj(array[0]),null,dec)
+  if(array.length==1)
+    return ret
+  for(var ct=1;ct<array.length-1;ct++)
+    ret+=", "+x(w.anobject,getObj(array[ct]),null,dec)
+  ret+=x(w.and)+x(w.anobject,getObj(array[array.length-1]),null,dec)
+  return ret
+}
+function alistobjsnoscenery(argarray,dec){
+  var array=[]
+  for(const item of argarray){
+    if(!getObj(item).scenery)
+      array.push(item)
+  }
+  if(array.length==0)
+    return x(w.nothing)
+  ret=x(w.anobject,getObj(array[0]),null,dec)
+  if(array.length==1)
+    return ret
+  for(var ct=1;ct<array.length-1;ct++)
+    ret+=", "+x(w.anobject,getObj(array[ct]),null,dec)
+  ret+=x(w.and)+x(w.anobject,getObj(array[array.length-1]),null,dec)
   return ret
 }
 function listactions(array,obj){
@@ -702,27 +868,24 @@ function listactions(array,obj){
   ret+=x(w.or)+inneraction(array[array.length-1],obj)
   return ret
 }
-function anlistobjs(argarray){
-  var array=[]
-  for(const item of argarray)
-    if(!getObj(item).scenery)
-      array.push(item)
-  if(array.length==0)
-    return x(w.nothing)
-  ret=x(w.anobject,getObj(array[0]))
-  if(array.length==1)
-    return ret
-  for(var ct=1;ct<array.length-1;ct++)
-    ret+=", "+x(w.anobject,getObj(array[ct]))
-  ret+=x(w.and)+x(w.anobject,getObj(array[array.length-1]))
-  return ret
-}
 
 //// interaction
 
+/*
+var editMode=false
 function changeEditable() {
-  document.body.contentEditable=
-    document.body.contentEditable=='true'?'false':'true'
+  editMode=!editMode
+  var mod=document.getElementById('$room')
+  mod.contentEditable=editMode
+  showAll()
+}
+*/
+
+var darkMode=false
+function changeTheme() {
+  darkMode=!darkMode
+  document.body.classList.toggle('dark-theme')
+  localStorage.setItem('HyFa-theme',darkMode?'dark':'light');
 }
 
 function download(){
@@ -784,150 +947,23 @@ function isvisible(obj){
 
 function dragndrop(source,drain){
   var sobj=getObj(source)
-  if(!isvisible(sobj))
-    return msg(x(w.Cantsee,sobj))
-  if(sobj.scenery||sobj.fixedinplace)
-    return msg(x(w.Canttake,sobj))
-  if(drain=='@inventory'){
-    var loc=sobj.loc
-    if(loc=='@carried'){
-      if(!sobj.wearable)
-        return msg(x(w.Cantwear,sobj))
-      remove(world.carried,sobj.id)
-      world.worn.push(sobj.id)
-      sobj.loc='@worn'
-      msg(x(w.Youwear,sobj))
-      return showAll()
-    }
-    if(loc=='@worn'){
-      remove(world.worn,sobj.id)
-      world.carried.push(sobj.id)
-      sobj.loc='@carried'
-      msg(x(w.Youremove,sobj))
-      return showAll()
-    }
-    var org=getObj(loc)
-    remove(org.objects,sobj.id)
-    world.carried.push(sobj.id)
-    sobj.loc='@carried'
-    msg(x(w.Youtake,sobj,org))
-    return showAll()
-  }
-  if(drain=='@carried'){
-    var loc=sobj.loc
-    if(loc=='@carried')
-      return msg(x(w.Alreadyhold,sobj))
-    if(loc=='@worn'){
-      remove(world.worn,sobj.id)
-      world.carried.push(sobj.id)
-      sobj.loc='@carried'
-      msg(x(w.Youremove,sobj))
-      return showAll()
-    }
-    var org=getObj(loc)
-    remove(org.objects,sobj.id)
-    world.carried.push(sobj.id)
-    sobj.loc='@carried'
-    msg(x(w.Youtake,sobj,org))
-    return showAll()
-  }
-  if(drain=='@worn'){
-    var loc=sobj.loc
-    if(loc=='@carried'){
-      if(!sobj.wearable)
-        return msg(x(w.Cantwear,sobj))
-      remove(world.carried,sobj.id)
-      world.worn.push(sobj.id)
-      sobj.loc='@worn'
-      msg(x(w.Youwear,sobj))
-      return showAll()
-    }
-    if(loc=='@worn')
-      return msg(x(w.Alreadywear,sobj))
-    var org=getObj(loc)
-    remove(org.objects,sobj.id)
-    world.carried.push(sobj.id)
-    sobj.loc='@carried'
-    msg(x(w.Youtake,sobj,org))
-    showAll()
-    if(!sobj.wearable)
-      return msg(x(w.Cantwear,sobj))
-    remove(world.carried,sobj.id)
-    world.worn.push(sobj.id)
-    sobj.loc='@worn'
-    msg(x(w.Youwear,sobj))
-    return showAll()
-  }
-  var dobj=getObj(drain)
-  if(!isvisible(dobj))
-    return msg(x(w.Cantsee,dobj))
-  if(sobj==dobj)
-    return msg(x(w.Cantdo))
-  switch(dobj.type){
-    case 'room':
-      if(sobj.loc=='@carried'){
-        remove(world.carried,sobj.id)
-        addObj(dobj,sobj)
-        msg(x(w.Youdrop,sobj,dobj))
-        return showAll()
-      }
-      if(sobj.loc=='@worn'){
-        remove(world.worn,sobj.id)
-        addObj(dobj,sobj)
-        msg(x(w.Youremove,sobj))
-        msg(x(w.Youdrop,sobj,dobj))
-        return showAll()
-      }
-      var sloc=getObj(sobj.loc)
-      remove(sloc.objects,sobj.id)
-      addObj(dobj.sobj)
-      msg(x(w.Youtake,sobj,sloc))
-      msg(x(w.Youputin,sobj,dobj))
-      return showAll()
-    case 'container':
-      if(dobj.closed)
-        return msg(x(w.Cantdo)+' '+x(w.Itsclosed,dobj))
-      if(sobj.loc=='@carried'){
-        remove(world.carried,sobj.id)
-        addObj(dobj,sobj)
-        msg(x(w.Youputin,sobj,dobj))
-        return showAll()
-      }
-      if(sobj.loc=='@worn'){
-        remove(world.worn,sobj.id)
-        addObj(dobj,sobj)
-        msg(x(w.Youremove,sobj))
-        msg(x(w.Youputin,sobj,dobj))
-        return showAll()
-      }
-      var sloc=getObj(sobj.loc)
-      remove(sloc.objects,sobj.id)
-      addObj(dobj,sobj)
-      msg(x(w.Youtake,sobj,sloc))
-      msg(x(w.Youputin,sobj,dobj))
-      return showAll()
-    case 'supporter':
-      if(sobj.loc=='@carried'){
-        remove(world.carried,sobj.id)
-        addObj(dobj,sobj)
-        msg(x(w.Youputon,sobj,dobj))
-        return showAll()
-      }
-      if(sobj.loc=='@worn'){
-        remove(world.worn,sobj.id)
-        addObj(dobj,sobj)
-        msg(x(w.Youremove,sobj))
-        msg(x(w.Youputon,sobj,dobj))
-        return showAll()
-      }
-      var sloc=getObj(sobj.loc)
-      remove(sloc.objects,sobj.id)
-      addObj(dobj,sobj)
-      msg(x(w.Youtake,sobj,sloc))
-      msg(x(w.Youputon,sobj,dobj))
-      return showAll()
+  switch(drain){
+    case '@inventory':
+      var loc=sobj.loc
+      if(loc=='@carried')
+        return dowear(source)
+      if(loc=='@worn')
+        return doremove(source)
+      return dotake(source)
+    case '@carried':
+      return dotake(source)
+    case '@worn':
+      return dowear(source)
     default:
-      return msg(x(w.Cantdo))
+      var dobj=getObj(drain)
+      if(dobj.type=='exit')
+        return dopush(source,drain)
+      doput(source,drain)
   }
 }
 
@@ -939,12 +975,28 @@ function clickon(ev){
     return perform(words[0],words[1],words[2])
   }
   var obj=getObj(ev.target.id)
+  if(!obj)
+    return msg(x(w.Cantseethat))
   switch(obj.type){
+    case 'portal':
+      return jumpthrough(obj)
     case 'exit':
       return gothrough(obj)
     default:
       return examine(obj)
   }
+}
+function jumpthrough(obj){
+  if(!isvisible(obj))
+    return msg(x(w.Cantseeexit,obj))
+  var oldloc=world.loc
+  world=worlds[obj.worldto]
+  world.loc=obj.roomto
+  var room=getObj(world.loc)
+  if(oldloc.charAt(0)!="@")
+    msg(x(w.Yougoto,room))
+  getel('$room').classList="animate__animated animate__flipOutX"
+  setTimeout(function(){showAll();getel('$room').classList="animate__animated animate__flipInX";},1300)
 }
 function gothrough(obj){
   if(!isvisible(obj))
@@ -954,19 +1006,16 @@ function gothrough(obj){
   var room=getObj(world.loc)
   if(oldloc.charAt(0)!="@")
     msg(x(w.Yougoto,room))
-  showAll()
+  getel('$room').classList="animate__animated animate__flipOutX"
+  setTimeout(function(){showAll();getel('$room').classList="animate__animated animate__flipInX";},1300)
 }
 function examine(obj){
   if(!isvisible(obj))
     return msg(x(w.Cantsee,obj))
   var str=mark(x(obj.desc||w.Nospecial,obj))
   str+=suggestactions(obj)
-  if(obj.objects&&obj.objects.length>0)
-    if(obj.type!='container'||obj.transparent||!obj.closed)
-      str+="<br>"+(
-        obj.type=="supporter"||obj.type=="mount"?
-        onyousee:inyousee
-      )(obj)
+  if(obj.objects&&obj.objects.length>0&&(obj.type!='container'||obj.transparent||!obj.closed))
+      str+="<br>"+(obj.type=="supporter"||obj.type=="mount"?onyousee:inyousee)(obj)
   msg(str)
 }
 function suggestactions(obj){
@@ -987,63 +1036,257 @@ function suggestactions(obj){
             actions.push('remove')
           else
             actions.push('wear')
+        if(obj.edible)
+          actions.push('eat')
       }
+      if(obj.readable)
+        actions.push('read')
+      if(obj.switchable)
+        actions.push(obj.switchedon?'switchoff':'switchon')
       break
   }
   return actions.length>0?"<br>"+x(w.Youcando,actions,obj):""
 }
+
+// actions
+
 function perform(action,id,id2){
   switch(action){
     case 'take':
-      return dragndrop(id,'@carried')
+      return dotake(id)
     case 'wear':
-      return dragndrop(id,'@worn')
+      return dowear(id)
     case 'drop':
-      return dragndrop(id,getRoom().id)
+      return dodrop(id)
     case 'remove':
-      return dragndrop(id,'@carried')
+      return doremove(id)
     case 'open':
       return doopen(id)
     case 'close':
       return doclose(id)
+    case 'eat':
+      return doeat(id)
+    case 'read':
+      return doread(id)
+    case 'switchon':
+      return doswitchon(id)
+    case 'switchoff':
+      return doswitchoff(id)
+  }
+}
+function dopush(id,toid){
+  var sobj=getObj(id)
+  if(!isvisible(sobj))
+    return msg(x(w.Cantsee,sobj))
+  if(sobj.scenery||sobj.fixedinplace||!sobj.pushable)
+    return msg(x(w.Cantpush,sobj))
+  var dobj=getObj(toid)
+  if(dobj.type!='exit'||!dobj.crossable)
+    return msg(x(w.Cantpushto,sobj,dobj))
+  var loc=getObj(sobj.loc)
+  remove(loc.objects,id)
+  sobj.loc=dobj.roomto
+  getObj(dobj.roomto).objects.push(id)
+  msg(x(w.Youpushto,sobj,dobj))
+  return showAll()
+}
+function dotake(id){
+  var sobj=getObj(id)
+  if(!isvisible(sobj))
+    return msg(x(w.Cantsee,sobj))
+  if(sobj.scenery||sobj.fixedinplace)
+    return msg(x(w.Canttake,sobj))
+  var loc=sobj.loc
+  if(loc=='@carried')
+    return msg(x(w.Alreadycarry,sobj))
+  if(loc=='@worn')
+    return doremove(id)
+  var org=getObj(loc)
+  remove(org.objects,sobj.id)
+  world.carried.push(sobj.id)
+  sobj.loc='@carried'
+  msg(x(w.Youtake,sobj,org))
+  return showAll()
+}
+function doremove(id){
+  var sobj=getObj(id)
+  if(sobj.loc!='@worn')
+    return msg(x(w.Dontwear,sobj))
+  remove(world.worn,sobj.id)
+  world.carried.push(sobj.id)
+  sobj.loc='@carried'
+  msg(x(w.Youremove,sobj))
+  return showAll()
+}
+function dowear(id){
+  var sobj=getObj(id)
+  if(sobj.loc=='@worn')
+    return msg(x(w.Alreadywear,sobj))
+  if(sobj.loc!='@carried')
+    dotake(id)
+  if(sobj.loc!='@carried')
+    return
+  if(!sobj.wearable)
+    return msg(x(w.Cantwear,sobj))
+  remove(world.carried,sobj.id)
+  world.worn.push(sobj.id)
+  sobj.loc='@worn'
+  msg(x(w.Youwear,sobj))
+  return showAll()
+}
+function dodrop(id){
+  var sobj=getObj(id)
+  if(sobj.loc=='@worn')
+    doremove(id)
+  var dobj=getRoom()
+  if(!isvisible(dobj))
+    return msg(x(w.Cantsee,dobj))
+  if(sobj.loc==dobj.id)
+    return msg(x(w.Alreadyin,sobj,dobj))
+  if(sobj.loc!='@carried')
+    dotake(id)
+  if(sobj.loc!='@carried')
+    return
+  remove(world.carried,sobj.id)
+  addObj(dobj,sobj)
+  msg(x(w.Youdrop,sobj,dobj))
+  return showAll()
+}
+function doput(id,toid){
+  var dobj=getObj(toid)
+  if(!isvisible(dobj))
+    return msg(x(w.Cantsee,dobj))
+  if(dobj.type=='room')
+    return dodrop(id)
+  var sobj=getObj(id)
+  if(sobj.loc==dobj.id)
+    return msg(x(
+      dobj.type=='container'||dobj.type=='vehicle'?
+      w.Alreadyin:w.Alreadyon,
+    sobj,dobj))
+  if(sobj==dobj)
+    return msg(x(w.Cantputonself,sobj))
+  if(id!='@carried')
+    dotake(id)
+  if(sobj.loc!='@carried')
+    return
+  switch(dobj.type){
+    case 'container':
+      if(dobj.closed)
+        return msg(x(w.Cantdo)+' '+x(w.Itsclosed,dobj))
+      remove(world.carried,sobj.id)
+      addObj(dobj,sobj)
+      msg(x(w.Youputin,sobj,dobj))
+      return showAll()
+    case 'supporter':
+      remove(world.carried,sobj.id)
+      addObj(dobj,sobj)
+      msg(x(w.Youputon,sobj,dobj))
+      return showAll()
+    default:
+      return msg(x(w.Cantputon,sobj,dobj))
   }
 }
 function doopen(id){
   var obj=getObj(id)
+  if(!isvisible(obj))
+    return msg(x(w.Cantsee,obj))
   if(!obj.closed)
     return msg(x(w.Alreadyopen,obj))
   if(!obj.closable)
     return msg(x(w.Cantopen,obj))
   obj.closed=false
   msg(x(obj.transparent?w.Youopen:w.Youopenrevealing,obj,obj.objects))
+  showAll()
 }
 function doclose(id){
   var obj=getObj(id)
+  if(!isvisible(obj))
+    return msg(x(w.Cantsee,obj))
   if(obj.closed)
     return msg(x(w.Alreadyclosed,obj))
   if(!obj.closable)
     return msg(x(w.Cantclose,obj))
   obj.closed=true
   msg(x(w.Youclose,obj))
+  showAll()
 }
+function doeat(id){
+  var obj=getObj(id)
+  if(obj.loc!='@carried')
+    dotake(id)
+  if(obj.loc!='@carried')
+    return
+  if(!obj.edible)
+    return msg(x(w.Canteat,obj))
+  remove(world.carried,id)
+  world.offstage.push(id)
+  obj.loc='@offstage'
+  msg(x(w.Youeat,obj))
+  showAll()
+}
+function doread(id){
+  var obj=getObj(id)
+  if(!obj.readable)
+    return msg(x(w.Cantread,obj))
+  msg(x(w.Youread,obj)+x(obj.text))
+}
+function doswitchon(id){
+  var obj=getObj(id)
+  if(!obj.switchable)
+    return msg(x(w.Cantswitchon,obj))
+  if(obj.switchedon)
+    return msg(x(w.Alreadyswitchedon,obj))
+  obj.switchedon=true
+  msg(x(w.Youswitchon,obj))
+}
+function doswitchoff(id){
+  var obj=getObj(id)
+  if(!obj.switchable)
+    return msg(x(w.Cantswitchoff,obj))
+  if(!obj.switchedon)
+    return msg(x(w.Alreadyswitchedoff,obj))
+  obj.switchedon=false
+  msg(x(w.Youswitchoff,obj))
+}
+
+// show
 
 function showRoom(){
   var room=getRoom()
   var str='<h2 id="'+room.id+'" draggable="false" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)">'+cap(x(room.name))+'</h2><p>'
-    +mark(x(room.desc,room))
-  if(room.objects.length>0)
-    str+="<p>"+yousee(room)
-  str+="<p>"+(room.id.charAt(0)=='@'?menulist(room.exits):listexits(room))
+    +mark(x(room.desc,room),true)
+  if(room.objects.length>0){
+    var empty=true
+    for(var ct=0;ct<room.objects.length;ct++)
+      if(!getObj(room.objects[ct]).scenery){
+        empty=false
+        break
+      }
+    if(!empty)
+      str+='<p>'+yousee(room,true)
+    for(var ct=0;ct<room.objects.length;ct++){
+      var obj=getObj(room.objects[ct])
+      if(obj.objects&&obj.objects.length>0&&(obj.type!='container'||obj.transparent||!obj.closed))
+        str+="<p>"+(obj.type=="supporter"||obj.type=="mount"?onyousee:inyousee)(obj,false,true)
+    }
+  }
+  str+='<p>'+(room.id.charAt(0)=='@'?menulist(room.exits,true):listexits(room,true))
   inner('$room',str)
 }
 function showInventory(){
-  var str='<h3 id="@inventory" draggable="false" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)">'+x(w.Inventory)+"</h3><p>"
-  if(world.carried.length>0)
-    str+="<p>"+youcarry()
-  else
-    str+=x(w.Youcarrynothing)
-  if(world.worn.length>0)
-    str+="<p>"+youwear()
+  var str='<h3 id="@inventory" draggable="false" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)">'+x(w.Inventory)+"</h3>"
+  str+=youcarryandwear(true)
+  for(var ct=0;ct<world.carried.length;ct++){
+    var obj=getObj(world.carried[ct])
+    if(obj.objects&&obj.objects.length>0&&(obj.type!='container'||obj.transparent||!obj.closed))
+      str+="<p>"+(obj.type=="supporter"||obj.type=="mount"?onyousee:inyousee)(obj,false,true)
+  }
+  for(var ct=0;ct<world.worn.length;ct++){
+    var obj=getObj(world.worn[ct])
+    if(obj.objects&&obj.objects.length>0&&(obj.type!='container'||obj.transparent||!obj.closed))
+      str+="<p>"+(obj.type=="supporter"||obj.type=="mount"?onyousee:inyousee)(obj,false,true)
+  }
   inner('$inventory',str)
 }
 function showAll(){
@@ -1053,10 +1296,18 @@ function showAll(){
 
 function restart(){
   loadWorld('$START')
+  msg(x(w.RESTART))
   showAll()
 }
 
 window.onload=function(){
+  darkMode=false
+  const currentTheme=localStorage.getItem("HyFa-theme")
+  if(currentTheme=="dark"){
+    document.body.classList.add("dark-theme");
+    getel("themecheckbox").checked=true
+    darkMode=true
+  }
   for(var ct=1;ct<=9;ct++){
     var el=document.createElement("li")
     el.id="$msg"+ct
@@ -1071,7 +1322,6 @@ function loadfile(ev) {
   var reader=new FileReader()
   reader.onload=function () {
     try {
-      alert(reader.result)
       world=JSON.parse(reader.result)
       showAll()
       msg(x(w.Done))
@@ -1082,15 +1332,31 @@ function loadfile(ev) {
   reader.readAsText(file)
 }
 
-//// tutorial
+//// help
+
+world=new World('@world-help')
 
 var r=new Room('@help')
-r.name="tutorial room"
-addName(r,'it','stanza del tutorial')
-r.itfemminile=true
+r.name={en:"tutorial room",it:"stanza del tutorial"}
+r.it_femminile=true
 r.desc={
-  en:"This story was created using <b><a href='https://github.com/YouDevIt/HyperFable'>HyperFable</a></b>, an <i>HTML5</i> interface for <i>Interactive Fiction</i> works, written by <a href='mailto:leonardo.boselli@youdev.it'>Leonardo Boselli</a>.<p>The main actions to play are:<ul><li>Click on the highlighted words to perform the default action, i.e. to examine the corresponding objects, move through an exit, etc.</li><li>Drag and drop the words to move the objects around, apply actions, and so on.<br>You can even drag verbs and drop words on 'Inventory', or the room name. Try different combinations!</li></ul>",
-  it:"Questa storia è stata creata con <b><a href='https://github.com/YouDevIt/HyperFable'>HyperFable</a></b>, un'interfaccia <i>HTML5</i> per lavori di <i>Narrativa Interattiva</i> works, scritta da <a href='mailto:leonardo.boselli@youdev.it'>Leonardo Boselli</a>.<p>Le principali azione per giocare sono:<ul><li>Clicca sulle parole evidenziate per effettuare l'azione di base, cioè esaminare gli oggetti corrispondenti, muoverti attraverso un'uscita, ecc.</li><li>Trascina e rilascia (drag & drop) le parole per cambiare la posizione degli oggetti, applicare azioni e così via.<br>Puoi anche trascinare verbi e spostare parole su 'Inventario' o sul nome della stanza. Tenta diverse combinazioni!</li></ul>"
+en:
+`This story was created using <b><a href='https://github.com/YouDevIt/HyperFable'>HyperFable</a></b>,
+an <i>HTML5</i> interface for <i>Interactive Fiction</i> works, written by
+<a href='mailto:leonardo.boselli@youdev.it'>Leonardo Boselli</a>.
+<p>The main actions to play are:<ul><li>Click on the highlighted words to perform the default action,
+i.e. to examine the corresponding objects, move through an exit, etc.</li><li>Drag and drop the words
+to move the objects around, apply actions, and so on.<br>You can even drag verbs and drop words on
+'Inventory', or the room name. Try different combinations!</li></ul>`
+,it:
+`Questa storia è stata creata con <b><a href='https://github.com/YouDevIt/HyperFable'>HyperFable</a></b>,
+un'interfaccia <i>HTML5</i> per lavori di <i>Narrativa Interattiva</i> works, scritta da
+<a href='mailto:leonardo.boselli@youdev.it'>Leonardo Boselli</a>.
+<p>Le principali azione per giocare sono:<ul><li>Clicca sulle parole evidenziate per effettuare l'azione di base,
+cioè esaminare gli oggetti corrispondenti, muoverti attraverso un'uscita, ecc.</li><li>Trascina e rilascia
+(drag & drop) le parole per cambiare la posizione degli oggetti, applicare azioni e così via.
+<br>Puoi anche trascinare verbi e spostare parole su 'Inventario' o sul nome della stanza.
+Tenta diverse combinazioni!</li></ul>`
 }
 var t=new Thing('@help-cube')
 t.name={en:"cube",it:"cubo"}
@@ -1099,31 +1365,137 @@ t.desc={
   it:"Un piccolo {@help-cube}. <i>Trascinalo sull'inventario o su altri oggetti.</i>"
 }
 addObj(r,t)
+var t2=new Supporter('@help-chair')
+t2.name={en:"chair",it:"sedia"}
+t2.desc={
+  en:"A {@help-chair}.",
+  it:"Una {@help-chair}."
+}
+t2.enterable=true
+addObj(r,t2)
+t2=new Supporter('@help-table')
+t2.name={en:"table",it:"tavolo"}
+t2.desc={
+  en:"A {@help-table}. <i>Drag objects on it.</i>",
+  it:"Un {@help-table}. <i>Trascina oggetti su di esso.</i>"
+}
+t2.fixedinplace=true
+addObj(r,t2)
+t=new Thing('@help-apple')
+t.name={en:"apple",it:"mela"}
+t.it_femminile=true
+t.edible=true
+t.desc={
+  en:"A {@help-apple}. <i>Try to eat it.</i>",
+  it:"Una {@help-apple}. <i>Prova a mangiarla.</i>"
+}
+addObj(t2,t)
+t=new Thing('@help-lamp')
+t.name={en:"lamp",it:"lampada"}
+t.it_femminile=true
+t.switchable=true
+t.desc={en:"A [on or off] {@help-lamp}.",it:"Una {@help-lamp} [acceso o spento]."}
+addObj(t2,t)
+t2=new Supporter('@help-hanger')
+t2.name={en:"hanger",it:"attaccapanni"}
+t2.desc={
+  en:"A {@help-hanger}.",
+  it:"Un {@help-hanger}."
+}
+t2.fixedinplace=true
+addObj(r,t2)
 t=new Thing('@help-hat')
 t.name={en:"hat",it:"cappello"}
 t.wearable=true
 t.desc={
-  en:"A {@help-hat}. <i>Drag it twice on the inventory to wear it.</i>",
-  it:"Un {@help-hat}. <i>Trascinalo due volte sull'inventario per indossarlo.</i>"
+  en:"A {@help-hat}. <i>Drag it twice on 'Inventory' to wear it.</i>",
+  it:"Un {@help-hat}. <i>Trascinalo due volte su 'Inventario' per indossarlo.</i>"
 }
-addObj(r,t)
-t=new Supporter('@help-table')
-t.name={en:"table",it:"tavolo"}
-t.desc={
-  en:"A {@help-table}. <i>Drag objects on it.</i>",
-  it:"Un {@help-table}. <i>Trascina oggetti su di esso.</i>"
-}
-t.fixedinplace=true
-addObj(r,t)
+addObj(t2,t)
 t=new Container('@help-box')
 t.name={en:"box",it:"scatola"}
 t.desc={
-  en:"An open {@help-box}. <i>Drag objects on it.</i>",
-  it:"Una {@help-box} aperta. <i>Trascina oggetti su di essa.</i>"
+  en:"An [open or closed] {@help-box}. <i>Drag objects on it.</i>[endif]",
+  it:"Una {@help-box} [aperto o chiuso]. <i>Trascina oggetti su di essa.</i>"
 }
 t.closed=false
-t.openable=false
+t.closable=true
 t.it_femminile=true
 addObj(r,t)
-t=new Exit("@help-exit",r,'@intro')
+
+t=new Exit("Go to the other room",r,'help-other')
+addName(t,"it","Vai all'altra stanza")
+
+t=new Portal("@help-exit",r,'@intro','@world')
 t.name={en:'Back to the game',it:'Torna al gioco'}
+
+t=new Portal("About",r,'@about','@world-about')
+
+r=new Room('help-other')
+r.name={en:"other room",it:"altra stanza"}
+r.it_femminile=true
+r.desc={
+  en:"This is another room. Go back using a visible exit.",
+  it:"Questa è un'altra stanza. Torna indietro usando un'uscita visibile."
+}
+
+t=new Exit("Exit",r,'@help')
+addName(t,"it","Uscita")
+
+world=worlds['@world']
+
+//// about
+
+world=new World('@world-about')
+
+r=new Room('@about')
+r.name="HyperFable"
+r.desc={
+en:
+`An <i>HTML5</i> interface for <i>Interactive Fiction</i> stories (<a href="https://github.com/YouDevIt/HyperFable">GitHub&nbsp;repository</a>).
+<p><b>Copyright &copy 2021 Leonardo Boselli</b>
+<ul><li><b>Channels:</b>
+<br><a href="https://www.twitch.tv/leobos67"><i>LeoBos67</i></a> on Twitch
+<br><a href="https://www.youtube.com/channel/UC9G8z8nxZjynvB77ZRzL-MQ"><i>1001 Avventura</i></a> YouTube channel</li>
+<li><b>Social:</b>
+<br><a href="https://twitter.com/1001avventura"><i>@1001avventura</i></a> on Twitter
+<br><a href="https://web.telegram.org/"><i>@milleunavventura</i></a> on Telegram
+<br><a href="https://www.facebook.com/Mille.e.Una.Avventura"><i>Mille.e.Una.Avventura</i></a> on Facebook</li>
+<li><b>Contacts:</b>
+<br><a href="https://www.youdev.it">Official <i>YouDev.it</i> site</a>
+<br><a href="mailto:leonardo.boselli@youdev.it">Leonardo Boselli's email</a></li></ul>`
+,it:
+`Un'interfaccia <i>HTML5</i> per opere di <i>Narrativa Interattiva</i> (<a href="https://github.com/YouDevIt/HyperFable">GitHub&nbsp;repository</a>).
+<p><b>Copyright &copy 2021 Leonardo Boselli</b>
+<ul><li><b>Canali:</b>
+<br><a href="https://www.twitch.tv/leobos67"><i>LeoBos67</i></a> su Twitch
+<br><a href="https://www.youtube.com/channel/UC9G8z8nxZjynvB77ZRzL-MQ"><i>1001 Avventura</i></a> canale YouTube</li>
+<li><b>Social:</b>
+<br><a href="https://twitter.com/1001avventura"><i>@1001avventura</i></a> su Twitter
+<br><a href="https://web.telegram.org/"><i>@milleunavventura</i></a> su Telegram
+<br><a href="https://www.facebook.com/Mille.e.Una.Avventura"><i>Mille.e.Una.Avventura</i></a> su Facebook</li>
+<li><b>Contatti:</b>
+<br><a href="https://www.youdev.it">Sito ufficiale di <i>YouDev.it</i></a>
+<br><a href="mailto:leonardo.boselli@youdev.it">Email di Leonardo Boselli</a></li></ul>`}
+t=new Thing('license')
+addName(t,'it','licenza')
+t.it_femminile=true
+t.desc={en:"A simple piece of paper.",it:"Un semplice pezzo di carta."}
+t.readable=true
+const imgcc="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAAAPCAMAAABEF7i9AAAABGdBTUEAANbY1E9YMgAAAJZQTFRF////7u7u3d3dys7KzMzMyMzIxsrGxcbFur+6u7u7s7iyq7GqqqqqmZmZlJmTj5CPiIiIh4eHhoaGgICAfYJ9d3d3cnZxZ2tnZmZmW15bVVVVS0xLREREQ0NDQkJCQUJBOz07OTs5MzMzMTMxLjAuJygnJCUjIiIiISEhICAgGRkZERERDxAPDg4ODQ4NDQ0NDQ0MAAAADbeuvgAAAOJJREFUeNqtk21PAjEQhKdyKjpwFrGIWN8QOPE8cP7/n/PD9YolmhivmzRpJ9un090WyhwQsoYgkCRvZYPkm5IcfPzbXwssGxsP8WtyOO0JfH47uC50R57e9wPuLIpK3nhVBfwrObiSJAAS1A7FKXAAhDYcAW90gWoB52ozHsHtyOF5yEebFfK71W9CB5ypMLLAYgkAriEvz6LD4KPb2+FTAT869PPauDHcPnWo7zdE6vBIiDXcW4xqzY3X8gQPq6SGKfBvNeTLNnOXy89JBD5uMrxDznQdeE/vfX9K7r+cOb4AY2+UGwcd6o0AAAAASUVORK5CYII="
+t.text={
+en:'<p><a rel="license" href="http://creativecommons.org/licenses/by-nc-nd/4.0/"><img alt="Creative Commons License" style="border-width:0" src="'+imgcc
+  +'" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-nd/4.0/">Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International License</a>.',
+it:'<p><a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/deed.it"><img alt="Creative Commons License" style="border-width:0" src="'+imgcc
+  +'" /></a><br />Quest\'opera è concessa sotto <a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/deed.it">Licenza Internazionale Creative Commons Attribuzione-Non Commerciale-Non opere derivate 4.0</a>.'
+}
+world.carried.push(t.id)
+t.loc='@carried'
+
+t=new Portal("@help-exit",r,'@intro','@world')
+t.name={en:'Back to the game',it:'Torna al gioco'}
+
+t=new Portal("Help",r,'@help','@world-help')
+addName(t,"it","Aiuto")
+
+world=worlds['@world']

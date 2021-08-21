@@ -1,50 +1,75 @@
 <!DOCTYPE HTML>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HyperFable story</title>
   <link rel="stylesheet" href="app.css">
   <script src="app.js"></script>
   <script src="story.js"></script>
 </head>
 <body>
 
-<table align="right">
-<tr><td align="right">
+<table class="menu">
+<!--
+<tr><th>
 <label class="edit">EDIT <input type="checkbox" onclick="changeEditable()"></label>
-</td></tr><tr><td>
+</th></tr><tr><th>
 &nbsp;
-</td></tr><tr><td align="right">
+</th></tr>
+-->
+<tr><th>
+<label class="dark">DARK <input id="themecheckbox" type="checkbox" onclick="changeTheme()"></label>
+</th></tr><tr><th>
+&nbsp;
+</th></tr>
+<tr><th>
 <button id="$savefile" type="button" class="button" onclick="download()">SAVE FILE</button>
-</td></tr><tr><td align="right">
+</th></tr><tr><th>
 <label id="$loadfile" for="file-upload" class="custom-file-upload">&nbsp;LOAD FILE&nbsp;</label>
 <input id="file-upload" type="file" onchange="loadfile(event)" accept="text/plain">
-</td></tr><tr><td>
+</th></tr><tr><th>
 &nbsp;
-</td></tr><tr><td align="right">
+</th></tr><tr><th>
 <button id="$save" type="button" class="button" onclick="saveWorld()">SAVE</button>
-</td></tr><tr><td align="right">
+</th></tr><tr><th>
 <button id="$restore" type="button" class="button" onclick="loadWorld()">RESTORE</button>
-</td></tr><tr><td>
+</th></tr><tr><th>
 &nbsp;
-</td></tr><tr><td align="right">
+</th></tr><tr><th>
 <button id="$restart" type="button" class="button" onclick="restart()">RESTART</button>
-</td></tr><tr><td>
+</th></tr><tr><th>
 &nbsp;
-</td></tr><tr><td align="right">
-<img class="flag" src="uk.svg" id="$en" onclick="changelang('en')" style="outline:solid red;">
-</td></tr><tr><td align="right">
-<img class="flag" src="it.svg" id="$it" onclick="changelang('it')" style="outline:solid black;">
-</td></tr></table>
+</th></tr><tr><th>
+<svg id="$en" class="flag-high" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 30" width="32" onclick="changelang('en')">
+  <clipPath id="t">
+  <path d="M30,15 h30 v15 z v15 h-30 z h-30 v-15 z v-15 h30 z"/>
+  </clipPath>
+  <path d="M0,0 v30 h60 v-30 z" fill="#00247d"/>
+  <path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" stroke-width="6"/>
+  <path d="M0,0 L60,30 M60,0 L0,30" clip-path="url(#t)" stroke="#cf142b" stroke-width="4"/>
+  <path d="M30,0 v30 M0,15 h60" stroke="#fff" stroke-width="10"/>
+  <path d="M30,0 v30 M0,15 h60" stroke="#cf142b" stroke-width="6"/>
+</svg>
+</th></tr><tr><th>
+<svg id="$it" class="flag-norm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3 2" width="32" onclick="changelang('it')">
+  <rect width="3" height="2" fill="#009246"/>
+  <rect width="2" height="2" x="1" fill="#fff"/>
+  <rect width="1" height="2" x="2" fill="#ce2b37"/>
+</svg>
+</th></tr>
+</table>
 
+<div class="content">
 <div id='$room'></div>
 <hr>
-<p>
 <div id='$inventory'></div>
 <hr>
 <p>
 <ol start="0" reversed id="$msg">
-<li style="font-weight:bold;"><img id="$img" src="" align="right" width="64"><span id="$msg0"></span></li>
+<li class="msg"><span id="$msg0"></span></li>
 </ol>
+</div>
 
 </body>
 </html>
