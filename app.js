@@ -1479,9 +1479,9 @@ function doeat(id){
 function doread(id){
   if(id=='@inventory')
     msg(x(w.Cantdo))
+  var obj=getObj(id)
   if(!isvisible(obj))
     return msg(x(w.Cantsee,obj))
-  var obj=getObj(id)
   if(!obj.readable)
     return msg(x(w.Cantread,obj))
   msg(x(w.Youread,obj)+x(obj.text))
@@ -1591,7 +1591,7 @@ window.onload=function(){
 function loadfile(ev) {
   var file=ev.target.files[0]
   var reader=new FileReader()
-  reader.onload=function () {
+  reader.onload=function(){
     try {
       world=JSON.parse(reader.result)
       showAll()
