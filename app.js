@@ -103,6 +103,14 @@ function decode_en(p1,obj1,obj2,dec1,dec2){
       return o.closed?'closed':'open'
     case 'on or off':
       return o.switchedon?'switched on':'switched off'
+    case 'in':
+      return isContainer(o)||isRoom(o)?'in':'on'
+    case 'In':
+      return isContainer(o)||isRoom(o)?'In':'On'
+    case 'enter':
+      return isContainer(o)?'enter':(o.seatable?'sit on':(o.climbable?'climb':'get on'))
+    case 'exit':
+      return isContainer(o)?'exit':(o.climbable?'descend':'get off')
     default:
       return p1
   }
@@ -125,8 +133,6 @@ function decode_it(p1,obj1,obj2,dec1,dec2){
       return it.artdet(o)+innerobject(o,dec)
     case "nell'oggetto":
       return it.prepin(o)+innerobject(o,dec)
-    case "Nell'oggetto":
-      return cap(it.prepin(o))+innerobject(o,dec)
     case "sull'oggetto":
       return it.prepsu(o)+innerobject(o,dec)
     case "Sull'oggetto":
@@ -148,15 +154,31 @@ function decode_it(p1,obj1,obj2,dec1,dec2){
     case 'è':
       return o.it_plurale?'sono':'è'
     case 'o':
-      return o.it_femminile?
-        (o.it_plurale?'e':'a'):
-        (o.it_plurale?'i':'o')
+      return o.it_femminile?(o.it_plurale?'e':'a'):(o.it_plurale?'i':'o')
     case 'by':
       return 'di'
     case 'aperto o chiuso':
       return o.closed?'chius'+decode_it('o',o):'apert'+decode_it('o',o)
     case 'acceso o spento':
       return o.switchedon?'acces'+decode_it('o',o):'spent'+decode_it('o',o)
+    case 'in/su oggetto':
+      return (isContainer(o)||isRoom(o)?it.prepin:it.prepsu)(o)+innerobject(o,dec)
+    case 'In/su oggetto':
+      return cap((isContainer(o)||isRoom(o)?it.prepin:it.prepsu)(o))+innerobject(o,dec)
+    case 'entrare':
+      return isContainer(o)?'entrare':(o.seatable?'sederti':'salire')
+    case 'entrarci':
+      return isContainer(o)?'entrarci':(o.seatable?'sedertici':'salirci')
+    case 'uscire':
+      return isContainer(o)?'uscire':'scendere'
+    case 'uscirne':
+      return isContainer(o)?'uscirne':'scenderne'
+    case 'Sei entrato':
+      return isContainer(o)?'Sei entrato':(o.seatable?'Ti sei seduto':'Sei salito')
+    case 'entrato':
+      return isContainer(o)?'entrato':(o.seatable?'seduto':'salito')
+    case 'uscito':
+      return isContainer(o)?'uscito':'sceso'
     default:
       return p1
   }
@@ -184,6 +206,10 @@ var w={
   Nothingtodo:{en:"Nothing to do.",it:"Niente da fare."},
   Youcando:{en:"(You can [list of actions])",it:"(Puoi [lista di azioni])"},
   Cantdo:{en:"You can't do that.",it:"Non puoi farlo."},
+  Cantmovedirto:{
+    en:"You can't move directly to [the object].",
+    it:"Non puoi spostarti direttamente verso [l'oggetto].",
+  },
   Cantputon:{
     en:"You can't put [the object] on [the object2].",
     it:"Non puoi mettere [l'oggetto] [sull'oggetto2]."
@@ -196,6 +222,10 @@ var w={
     en:"Here you can't see [the object].",
     it:"Qui non vedi [l'oggetto]."
   },
+  Cantreach:{
+    en:"From here you can't reach [the object].",
+    it:"Da qui non puoi raggiungere [l'oggetto]."
+  },
   Cantseethat:{
     en:"Here you can see nothing like that.",
     it:"Qui non vedi nulla di simile."
@@ -203,6 +233,10 @@ var w={
   Cantseeexit:{
     en:"Here you can't see the exit [object].",
     it:"Qui non vedi l'uscita [oggetto]."
+  },
+  Cantreachexit:{
+    en:"From here you can't go to the exit [object] because you are [in2] [the object2].",
+    it:"Da qui non puoi andare a [oggetto] perché sei [in/su oggetto2]."
   },
   Canttake:{
     en:"You can't take [the object].",
@@ -217,20 +251,12 @@ var w={
     it:"Porti già [l'oggetto]."
   },
   Alreadyin:{
-    en:"[The object] [is] already in [the object2].",
-    it:"[L'oggetto] [è] già [nell'oggetto2]."
+    en:"[The object] [is] already [in2] [the object2].",
+    it:"[L'oggetto] [è] già [in/su oggetto2]."
   },
-  Alreadyon:{
-    en:"[The object] [is] already on [the object2].",
-    it:"[L'oggetto] [è] già [sull'oggetto2]."
-  },
-  Alreadyswitchedon:{
-    en:"[The object] [is] already switched on.",
-    it:"[L'oggetto] [è] già acces[o]."
-  },
-  Alreadyswitchedoff:{
-    en:"[The object] [is] already switched off.",
-    it:"[L'oggetto] [è] già spent[o]."
+  Alreadyswitched:{
+    en:"[The object] [is] already [on or off].",
+    it:"[L'oggetto] [è] già [acceso o spento]."
   },
   Cantswitchon:{
     en:"You can't switch on [the object].",
@@ -289,12 +315,8 @@ var w={
     it:"Uscite visibili: [lista di oggetti]."
   },
   Inseeing:{
-    en:"In [the object] you see [a list of objects2].",
-    it:"[Nell'oggetto] vedi [una lista di oggetti2]."
-  },
-  Onseeing:{
-    en:"On [the object] you see [a list of objects2].",
-    it:"[Sull'oggetto] vedi [una lista di oggetti2]."
+    en:"[In] [the object] you see [a list of objects2].",
+    it:"[In/su oggetto] vedi [una lista di oggetti2]."
   },
   Carring:{
     en:"You carry [a list of objects].",
@@ -324,17 +346,13 @@ var w={
     en:"You take [the object] from [the object2].",
     it:"Hai preso [l'oggetto] [dall'oggetto2]."
   },
-  Youputin:{
-    en:"You put [the object] in [the object2].",
-    it:"Hai messo [l'oggetto] [nell'oggetto2].",
-  },
-  Youputon:{
-    en:"You put [the object] on [the object2].",
-    it:"Hai messo [l'oggetto] [sull'oggetto2].",
+  Youput:{
+    en:"You put [the object] [in2] [the object2].",
+    it:"Hai messo [l'oggetto] [in/su oggetto2].",
   },
   Youdrop:{
-    en:"You drop [the object] in [the object2].",
-    it:"Hai lasciato [l'oggetto] [nell'oggetto2].",
+    en:"You drop [the object] [in2] [the object2].",
+    it:"Hai lasciato [l'oggetto] [in/su oggetto2].",
   },
   Youeat:{
     en:"You eat [the object].",
@@ -380,9 +398,9 @@ var w={
   switchoff:{en:"switch off [it]",it:"spegnerl[o]"},
   remove:{en:"remove [it]",it:"toglierl[o]"},
   open:{en:"open [it]",it:"aprirl[o]"},
-  Alreadyopen:{
-    en:"[The object] [is] already open.",
-    it:"[L'oggetto] [è] già apert[o]"
+  Alreadyopenclosed:{
+    en:"[The object] [is] already [open or closed].",
+    it:"[L'oggetto] [è] già [aperto o chiuso]"
   },
   onoroff:{en:"[on or off]",it:"[acceso o spento]"},
   openorclosed:{en:"[open or closed]",it:"[aperto o chiuso]"},
@@ -421,60 +439,68 @@ var w={
   e:{en:"east",it:"est"},
   u:{en:"up",it:"su"},
   d:{en:"down",it:"giù"},
-  enter:{en:"enter [it]",it:"entrarci"},
+  enter:{en:"[enter] [it]",it:"[entrarci]"},
+  climb:{en:"[enter] [it]",it:"[entrarci]"},
+  sit:{en:"[enter] [it]",it:"[entrarci]"},
+  Youalreadyin:{
+    en:"You are already [in] [the object].",
+    it:"Sei già [in/su oggetto]."
+  },
   Youenter:{
-    en:"You enter in [the object].",
-    it:"Sei entrato [nell'oggetto]."
+    en:"You [enter] [the object].",
+    it:"[Sei entrato] [in/su oggetto]."
+  },
+  Alreadyenter:{
+    en:"You already [enter] [the object].",
+    it:"Sei già [entrato] [in/su oggetto]."
   },
   Cantenter:{
-    en:"You can't enter in [the object].",
-    it:"Non puoi entrare [nell'oggetto]."
+    en:"You can't [enter] [the object].",
+    it:"Non puoi [entrare] [in/su oggetto]."
   },
-  exit:{en:"exit [it]",it:"uscirne"},
-  Youexit:{
-    en:"You exit [the object].",
-    it:"Sei uscito [dall'oggetto]."
-  },
-  Cantexit:{
-    en:"You can't exit [the object].",
-    it:"Non puoi uscire [dall'oggetto]."
-  },
-  sit:{en:"sit on [it]",it:"sedertici sopra"},
-  Yousit:{
-    en:"You sit on [the object].",
-    it:"Ti sei seduto [sull'oggetto]."
-  },
-  Cantsit:{
-    en:"You can't sit on [the object].",
-    it:"Non puoi sederti [sull'oggetto]."
-  },
-  getoff:{en:"get off [it]",it:"scenderne"},
-  Yougetoff:{
-    en:"You get off [the object].",
-    it:"Sei sceso [dall'oggetto]."
-  },
-  Cantgetoff:{
-    en:"You can't get off [the object].",
-    it:"Non puoi scendere [dall'oggetto]."
-  },
-  climb:{en:"climb [it]",it:"salirci"},
-  Youclimb:{
-    en:"You climb [the object].",
-    it:"Sei salito [sull'oggetto]."
-  },
-  Cantclimb:{
+  Cantgeton:{
     en:"You can't get on [the object].",
     it:"Non puoi salire [sull'oggetto]."
   },
-  descend:{en:"descend [it]",it:"scenderne"},
-  Youdescend:{
-    en:"You descend [the object].",
-    it:"Sei sceso [dall'oggetto]."
+  Arenotout:{
+    en:"You are not out of [the object].",
+    it:"Non sei fuori [dall'oggetto]."
   },
-  Cantdescend:{
-    en:"You can't descend [the object].",
-    it:"Non puoi scendere [dall'oggetto]."
+  exit:{en:"[exit] [it]",it:"[uscirne]"},
+  descend:{en:"[exit] [it]",it:"[uscirne]"},
+  Youexit:{
+    en:"You [exit] [the object].",
+    it:"Sei [uscito] [dall'oggetto]."
   },
+  Arein:{
+    en:"You are [in] [the object].",
+    it:"Non sei [in/su oggetto]."
+  },
+  Arenotin:{
+    en:"You are not in [the object].",
+    it:"Non sei [nell'oggetto]."
+  },
+  Arenoton:{
+    en:"You are not on [the object].",
+    it:"Non sei [sull'oggetto]."
+  },
+  Cantexit:{
+    en:"You can't [exit] [the object].",
+    it:"Non puoi [uscire] [dall'oggetto]."
+  },
+  Cantenterheld:{
+    en:"You can't [enter] [the object] because you hold [it].",
+    it:"Non puoi [entrare] [in/su oggetto] perché l[o] reggi in mano."
+  },
+  Cantenterworn:{
+    en:"You can't [enter] [the object] because you wear [it].",
+    it:"Non puoi [entrare] [in/su oggetto] perché l[o] indossi."
+  },
+  Cantbecause:{
+    en:"You can't because you are [in] [the object].",
+    it:"Non puoi perché sei [in/su oggetto]."
+  },
+  intheobject:{en:"[in] [the object]",it:"[in/su oggetto]"},
 }
 
 // english grammar rules
@@ -541,17 +567,17 @@ var it={
       if(obj.it_femminile)
         return num==0?"un'":'una '
       else
-        return num==0?'uno ':'un '
+        return num==0?'un ':'uno '
     }
   },
-  prepdi:function(obj){return this.prepart('di',obj)},
-  prepa:function(obj){return this.prepart('a',obj)},
-  prepda:function(obj){return this.prepart('da',obj)},
-  prepin:function(obj){return this.prepart('in',obj)},
-  prepsu:function(obj){return this.prepart('su',obj)},
+  prepdi:function(obj){return it.prepart('di',obj)},
+  prepa:function(obj){return it.prepart('a',obj)},
+  prepda:function(obj){return it.prepart('da',obj)},
+  prepin:function(obj){return it.prepart('in',obj)},
+  prepsu:function(obj){return it.prepart('su',obj)},
   prepart:function(prep,obj){
     if(obj.proper)
-      return prep
+      return prep+' '
     var num=it.artnum(obj)
     var str=(prep=='di'?'de':(prep=='in'?'ne':prep))
     if(obj.itplurale) {
@@ -578,7 +604,7 @@ var worlds={}
 
 function World(id){
   this.loc='@intro'
-  this.objects={'@offstage':{id:'@offstage',name:'void',loc:'@offstage',objects:['@offstage']}}
+  this.objects={'@offstage':{id:'@offstage',type:'room',loc:'@offstage',name:'void',objects:[]}}
   this.offstage=[]
   this.carried=[]
   this.worn=[]
@@ -627,6 +653,7 @@ function addDesc(obj,newlang,newdesc){
 function Group(id,type){
   Object.call(this,id,type||'group')
   this.objects=[]
+  this.refuses=[]
 }
 function addObj(group,obj){
   group.objects.push(obj.id)
@@ -637,12 +664,15 @@ function Person(id){
   Group.call(this,id,'person')
   this.wears=[]
 }
+function isPerson(obj){return obj.type=='person'}
 
 function Room(id){
   Group.call(this,id,'room')
   this.fixedinplace=true
   this.exits=[]
+  this.loc=null
 }
+function isRoom(obj){return obj.type=='room'}
 
 function Exit(id,room,roomto,type){
   Object.call(this,id,type||'exit')
@@ -650,15 +680,18 @@ function Exit(id,room,roomto,type){
   room.exits.push(this.id)
   this.loc=room.id
 }
+function isExit(obj){return obj.type=='exit'}
 
 function Portal(id,room,roomto,worldto){
   Exit.call(this,id,room,roomto,'portal')
   this.worldto=worldto||'@world'
 }
+function isPortal(obj){return obj.type=='portal'}
 
 function Thing(id){
   Object.call(this,id,'thing')
 }
+function isThing(obj){return obj.type=='thing'}
 
 function Container(id){
   Group.call(this,id,'container')
@@ -670,6 +703,12 @@ function Vehicle(id){
   this.enterable=true
 }
 
+function isContainer(obj){
+  var type=obj.type
+  return type=='container'||type=='vehicle'
+}
+function isVehicle(obj){return obj.type=='vehicle'}
+
 function Supporter(id){
   Group.call(this,id,'supporter')
 }
@@ -678,14 +717,28 @@ function Mount(id){
   Supporter.call(this,id,'mount')
 }
 
+function isSupporter(obj){
+  var type=obj.type
+  return type=='supporter'||type=='mount'
+}
+function isMount(obj){return obj.type=='mount'}
+
 function Topic(id){
   Object.call(this,id,'topic')
 }
+function isTopic(obj){return obj.type='topic'}
 
-function getObj(id){return world.objects[id]}
+function isFixed(obj){return obj.scenery||obj.fixedinplace}
+function isMovable(obj){
+  return ['thing','container','supporter'].indexOf(obj.type)>=0&&!isFixed(obj)
+}
+
+function getObj(id){
+  return world.objects[id]
+}
 function getRoom(){
   var oloc=getObj(world.loc)
-  while(oloc.type!='room')
+  while(oloc&&!isRoom(oloc))
     oloc=getObj(oloc.loc)
   return oloc
 }
@@ -752,15 +805,8 @@ function innerobject(obj,dec) {
   var type=obj.type
   var name=x(obj.name)
   var effect=type
-  if(type!='room') {
-    if(dec){
-      effect+=' dec'
-      var movable=['thing','container','supporter'].indexOf(type)>=0
-      if(movable)
-        movable=!(obj.scenery||obj.fixedinplace)
-      effect+=movable?' hvr-buzz-out':' hvr-radial-out'
-    }
-  }
+  if(type!='room'&&dec)
+      effect+=' dec'+(isMovable(obj)?' hvr-buzz-out':' hvr-radial-out')
   return '<span class="'+effect+'" id="'+id
     +'" draggable="true" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)" onclick="clickon(event)">'
     +name+'</span>'
@@ -788,9 +834,6 @@ function listexits(room,dec){
 function inyousee(obj,dec1,dec2){
   return x(w.Inseeing,obj,obj.objects,dec1,dec2)
 }
-function onyousee(obj,dec1,dec2){
-  return x(w.Onseeing,obj,obj.objects,dec1,dec2)
-}
 function youcarry(dec){
   return x(w.Carring,world.carried,null,dec,dec)
 }
@@ -813,8 +856,8 @@ function youcarryandwear(dec){
 
 function menulist(array,dec){
   var ret=''
-  for(var ct=0;ct<array.length;ct++)
-    ret+=x(w.object,getObj(array[ct]),null,dec)+' '
+  for(const item of array)
+    ret+=x(w.object,getObj(item),null,dec)+' '
   return ret
 }
 function listobjs(argarray,dec){
@@ -843,10 +886,9 @@ function alistobjs(argarray,dec){
 }
 function alistobjsnoscenery(argarray,dec){
   var array=[]
-  for(const item of argarray){
+  for(const item of argarray)
     if(!getObj(item).scenery)
       array.push(item)
-  }
   if(array.length==0)
     return x(w.nothing)
   ret=x(w.anobject,getObj(array[0]),null,dec)
@@ -869,7 +911,7 @@ function listactions(array,obj){
   return ret
 }
 
-//// interaction
+//// interface
 
 /*
 var editMode=false
@@ -901,7 +943,7 @@ function download(){
   downloadAnchorNode.remove()
 }
 
-// drag & drop
+// drag&drop and click
 
 function allowDrop(ev) {ev.preventDefault()}
 function drag(ev) {
@@ -924,28 +966,88 @@ function drop(ev) {
   dragndrop(source,drain)
 }
 
-function isvisible(obj){
-  if(obj.id==world.loc)
-    return true
-  var loc=obj.loc
+function lookroot(locid){
   while(true){
-    if(loc=='@carried'||loc=='@worn'||loc==world.loc)
-      return true
-    var oloc=getObj(loc)
-    if(oloc.type=='room')
-      return false
-    if(oloc.type=='supporter'||oloc.type=='mount')
-      loc=oloc.loc
-    else if(oloc.type=='container'||oloc.type=='vehicle'){
-      if(!oloc.transparent&&oloc.closed)
-        return false
-      loc=oloc.loc
-    }else
-      return false
+    if(locid=='@carried'||locid=='@worn')
+      locid=world.loc
+    var loc=getObj(locid)
+    if(isRoom(loc)||(isContainer(loc)&&loc.closed&&!loc.transparent))
+      return loc.id
+    locid=loc.loc
   }
+}
+function isinsidevisible(obj){
+  var locid=world.loc
+  while(locid!=obj.id){
+    var loc=getObj(locid)
+    if(isRoom(loc)||(isContainer(loc)&&loc.closed&&!loc.transparent))
+      return false
+    locid=loc.loc
+  }
+  return true
+}
+function isvisible(obj){
+  return isinsidevisible(obj)||lookroot(isRoom(obj)?obj.id:obj.loc)==lookroot(world.loc)
+}
+function reachroot(locid){
+  while(true){
+    if(locid=='@carried'||locid=='@worn')
+      locid=world.loc
+    var loc=getObj(locid)
+    if(isRoom(loc)||(isContainer(loc)&&loc.closed))
+      return loc.id
+    locid=loc.loc
+  }
+}
+function isinsidereachable(obj){
+  var locid=world.loc
+  while(locid!=obj.id){
+    var loc=getObj(locid)
+    if(isRoom(loc)||(isContainer(loc)&&loc.closed))
+      return false
+    locid=loc.loc
+  }
+  return true
+}
+function isreachable(obj){
+  return isinsidereachable(obj)||reachroot(isRoom(obj)||imhere(obj)?obj.id:obj.loc)==reachroot(world.loc)
+}
+function imhere(obj){
+  var locid=world.loc
+  var roomid=getRoom().id
+  while(locid!=roomid){
+    if(locid==obj.id)
+      return true
+    locid=getObj(locid).loc
+  }
+  return false
 }
 
 function dragndrop(source,drain){
+  if(source=='@inventory'){
+    if(drain=='@inventory')
+      return
+    var dobj=getObj(drain)
+    if(drain==world.loc)
+      return msg(x(w.Youalreadyin,dobj))
+    if(isRoom(dobj)){
+      for(const exitid of getRoom().exits){
+        var exit=getObj(exitid)
+        if(exit.roomto==drain)
+          return gothrough(exit)
+      }
+      var room=getRoom()
+      var cont=getObj(world.loc)
+      if(room!=dobj||room.id!=cont.loc)
+        return msg(x(w.Cantmovedirto,dobj))
+      return doexit(world.loc)
+    }
+    if(dobj.type=='exit')
+      return gothrough(dobj)
+    if(dobj.type=='portal')
+      return jumpthrough(dobj)
+    return moveto(drain)
+  }
   var sobj=getObj(source)
   switch(drain){
     case '@inventory':
@@ -961,13 +1063,11 @@ function dragndrop(source,drain){
       return dowear(source)
     default:
       var dobj=getObj(drain)
-      if(dobj.type=='exit')
+      if(dobj.type=='exit'||dobj.type=='portal')
         return dopush(source,drain)
-      doput(source,drain)
+      return doput(source,drain)
   }
 }
-
-// click
 
 function clickon(ev){
   if(ev.target.className=='action'){
@@ -986,9 +1086,42 @@ function clickon(ev){
       return examine(obj)
   }
 }
+
+// actions
+
+function carry(obj){
+  world.carried.push(obj.id)
+  obj.loc='@carried'
+}
+function wear(obj){
+  world.worn.push(obj.id)
+  obj.loc='@worn'
+}
+
+function moveto(id){
+  var obj=getObj(id)
+  if(!obj.enterable&&!obj.seatable&&!obj.climbable){
+    if(isContainer(obj))
+      return msg(x(w.Cantenter,obj))
+    return msg(x(w.Cantgeton,obj))
+  }
+  if(obj.loc=='@carried')
+    return msg(x(w.Cantenterheld,obj))
+  if(obj.loc=='@worn')
+    return msg(x(w.Cantenterworn,obj))
+  if(world.loc==id)
+    return msg(x(w.Youalreadyin,obj))
+  if(world.loc==obj.loc)
+    return (isContainer(obj)?doenter:doclimb)(id)
+  if(getObj(world.loc).loc==obj.loc)
+    return (isContainer(obj)?doexit:dodescend)(id)
+  return msg(x(w.Cantmovedirto,obj))
+}
 function jumpthrough(obj){
   if(!isvisible(obj))
     return msg(x(w.Cantseeexit,obj))
+  if(!isreachable(obj))
+    return msg(x(w.Cantreachexit,obj,getObj(world.loc)))
   var oldloc=world.loc
   world=worlds[obj.worldto]
   world.loc=obj.roomto
@@ -1001,6 +1134,11 @@ function jumpthrough(obj){
 function gothrough(obj){
   if(!isvisible(obj))
     return msg(x(w.Cantseeexit,obj))
+  var oloc=getObj(world.loc)
+  if(!isreachable(obj))
+    return msg(x(w.Cantreachexit,obj,oloc))
+  if(oloc.type!='room')
+    return msg(x(w.Cantbecause,oloc))
   var oldloc=world.loc
   world.loc=obj.roomto
   var room=getObj(world.loc)
@@ -1015,9 +1153,10 @@ function examine(obj){
   var str=mark(x(obj.desc||w.Nospecial,obj))
   str+=suggestactions(obj)
   if(obj.objects&&obj.objects.length>0&&(obj.type!='container'||obj.transparent||!obj.closed))
-      str+="<br>"+(obj.type=="supporter"||obj.type=="mount"?onyousee:inyousee)(obj)
+      str+="<br>"+inyousee(obj)
   msg(str)
 }
+
 function suggestactions(obj){
   var actions=[]
   switch(obj.type){
@@ -1026,7 +1165,7 @@ function suggestactions(obj){
         actions.push(obj.closed?"open":"close")
     case "supporter":
     case "thing":
-      if(!(obj.scenery||obj.fixedinplace)){
+      if(!isFixed(obj)){
         if(obj.loc=="@carried")
           actions.push('drop')
         else if(obj.loc!="@worn")
@@ -1039,6 +1178,12 @@ function suggestactions(obj){
         if(obj.edible)
           actions.push('eat')
       }
+      if(obj.enterable)
+        actions.push(obj.id==world.loc?'exit':'enter')
+      if(obj.seatable)
+        actions.push(obj.id==world.loc?'descend':'sit')
+      if(obj.climbable)
+        actions.push(obj.id==world.loc?'descend':'climb')
       if(obj.readable)
         actions.push('read')
       if(obj.switchable)
@@ -1072,16 +1217,92 @@ function perform(action,id,id2){
       return doswitchon(id)
     case 'switchoff':
       return doswitchoff(id)
+    case 'enter':
+      return doenter(id)
+    case 'climb':
+    case 'sit':
+      return doclimb(id)
+    case 'exit':
+      return doexit(id)
+    case 'descend':
+      return dodescend(id)
   }
 }
+function doenter(id){
+  if(id=='@inventory')
+    return msg(x(w.Cantdo))
+  var obj=getObj(id)
+  if(world.loc==id)
+    return msg(x(w.Youalreadyin,obj))
+  if(!obj.enterable)
+    return msg(x(w.Cantenter,obj))
+  if(obj.loc=='@carried')
+    return msg(x(w.Cantenterheld,obj))
+  if(obj.loc=='@worn')
+    return msg(x(w.Cantenterworn,obj))
+  if(obj.closed)
+    return msg(x(w.Cantenter,obj)+' '+x(w.Itsclosed,obj))
+  var room=getRoom()
+  if(world.loc!=room.id)
+    return msg(x(w.Cantbecause,getObj(world.loc)))
+  world.loc=id
+  msg(x(w.Youenter,obj))
+  showAll()
+}
+function doexit(id){
+  if(id=='@inventory')
+    return msg(x(w.Cantdo))
+  var obj=getObj(id)
+  if(world.loc!=id)
+    return msg(x(w.Arenotin,obj))
+  if(obj.closed)
+    return msg(x(w.Cantexit,obj)+' '+x(w.Itsclosed,obj))
+  world.loc=obj.loc
+  msg(x(w.Youexit,obj))
+  showAll()
+}
+function doclimb(id){
+  if(id=='@inventory')
+    return msg(x(w.Cantdo))
+  var obj=getObj(id)
+  if(world.loc==id)
+    return msg(x(w.Youalreadyin,obj))
+  if(!obj.climbable&&!obj.seatable)
+    return msg(x(w.Cantgeton,obj))
+  if(obj.loc=='@carried')
+    return msg(x(w.Cantenterheld,obj))
+  if(obj.loc=='@worn')
+    return msg(x(w.Cantenterworn,obj))
+  var room=getRoom()
+  if(world.loc!=room.id)
+    return msg(x(w.Cantbecause,getObj(world.loc)))
+  world.loc=id
+  msg(x(w.Youenter,obj))
+  showAll()
+}
+function dodescend(id){
+  if(id=='@inventory')
+    msg(x(w.Cantdo))
+  var obj=getObj(id)
+  if(world.loc!=id)
+    return msg(x(w.Arenoton,obj))
+  world.loc=obj.loc
+  msg(x(w.Youexit,obj))
+  showAll()
+}
 function dopush(id,toid){
-  var sobj=getObj(id)
+  if(id=='@inventory')
+    return msg(x(w.Cantdo))
   if(!isvisible(sobj))
     return msg(x(w.Cantsee,sobj))
-  if(sobj.scenery||sobj.fixedinplace||!sobj.pushable)
-    return msg(x(w.Cantpush,sobj))
+  if(!isreachable(sobj))
+    return msg(x(w.Cantreach,sobj))
+  if(imhere(sobj))
+    return msg(x(w.Cantdo)+' '+x(w.Arein,sobj))
   var dobj=getObj(toid)
-  if(dobj.type!='exit'||!dobj.crossable)
+  if(isFixed(sobj))
+    return msg(x(w.Cantpush,sobj))
+  if(!sobj.pushable||dobj.type=='portal'||dobj.type!='exit'||!dobj.crossable)
     return msg(x(w.Cantpushto,sobj,dobj))
   var loc=getObj(sobj.loc)
   remove(loc.objects,id)
@@ -1091,10 +1312,16 @@ function dopush(id,toid){
   return showAll()
 }
 function dotake(id){
+  if(id=='@inventory')
+    return msg(x(w.Cantdo))
   var sobj=getObj(id)
   if(!isvisible(sobj))
     return msg(x(w.Cantsee,sobj))
-  if(sobj.scenery||sobj.fixedinplace)
+  if(!isreachable(sobj))
+    return msg(x(w.Cantreach,sobj))
+  if(imhere(sobj))
+    return msg(x(w.Cantdo)+' '+x(w.Arein,sobj))
+  if(isFixed(sobj))
     return msg(x(w.Canttake,sobj))
   var loc=sobj.loc
   if(loc=='@carried')
@@ -1103,8 +1330,7 @@ function dotake(id){
     return doremove(id)
   var org=getObj(loc)
   remove(org.objects,sobj.id)
-  world.carried.push(sobj.id)
-  sobj.loc='@carried'
+  carry(sobj)
   msg(x(w.Youtake,sobj,org))
   return showAll()
 }
@@ -1113,12 +1339,13 @@ function doremove(id){
   if(sobj.loc!='@worn')
     return msg(x(w.Dontwear,sobj))
   remove(world.worn,sobj.id)
-  world.carried.push(sobj.id)
-  sobj.loc='@carried'
+  carry(sobj)
   msg(x(w.Youremove,sobj))
   return showAll()
 }
 function dowear(id){
+  if(id=='@inventory')
+    return msg(x(w.Cantdo))
   var sobj=getObj(id)
   if(sobj.loc=='@worn')
     return msg(x(w.Alreadywear,sobj))
@@ -1129,16 +1356,17 @@ function dowear(id){
   if(!sobj.wearable)
     return msg(x(w.Cantwear,sobj))
   remove(world.carried,sobj.id)
-  world.worn.push(sobj.id)
-  sobj.loc='@worn'
+  wear(sobj)
   msg(x(w.Youwear,sobj))
   return showAll()
 }
 function dodrop(id){
+  if(id=='@inventory')
+    return msg(x(w.Cantdo))
   var sobj=getObj(id)
   if(sobj.loc=='@worn')
     doremove(id)
-  var dobj=getRoom()
+  var dobj=getObj(world.loc)
   if(!isvisible(dobj))
     return msg(x(w.Cantsee,dobj))
   if(sobj.loc==dobj.id)
@@ -1153,46 +1381,61 @@ function dodrop(id){
   return showAll()
 }
 function doput(id,toid){
+  if(id=='@inventory')
+    return msg(x(w.Cantdo))
   var dobj=getObj(toid)
   if(!isvisible(dobj))
     return msg(x(w.Cantsee,dobj))
-  if(dobj.type=='room')
-    return dodrop(id)
+  if(!isreachable(dobj))
+    return msg(x(w.Cantreach,dobj))
   var sobj=getObj(id)
+  if(imhere(sobj))
+    return msg(x(w.Cantdo)+' '+x(w.Arein,sobj))
   if(sobj.loc==dobj.id)
-    return msg(x(
-      dobj.type=='container'||dobj.type=='vehicle'?
-      w.Alreadyin:w.Alreadyon,
-    sobj,dobj))
+    return msg(x(w.Alreadyin,sobj,dobj))
   if(sobj==dobj)
     return msg(x(w.Cantputonself,sobj))
-  if(id!='@carried')
+  if(sobj.loc!='@carried')
     dotake(id)
   if(sobj.loc!='@carried')
     return
-  switch(dobj.type){
-    case 'container':
-      if(dobj.closed)
-        return msg(x(w.Cantdo)+' '+x(w.Itsclosed,dobj))
-      remove(world.carried,sobj.id)
-      addObj(dobj,sobj)
-      msg(x(w.Youputin,sobj,dobj))
-      return showAll()
-    case 'supporter':
-      remove(world.carried,sobj.id)
-      addObj(dobj,sobj)
-      msg(x(w.Youputon,sobj,dobj))
-      return showAll()
-    default:
+  if(!dobj.objects)
+    return msg(x(w.Cantputon,sobj,dobj))
+  for(const id of dobj.refuses)
+    if(
+      (id.charAt(0)=='+'&&sobj[id.substring(1)])
+      ||(id.charAt(0)=='-'&&!sobj[id.substring(1)])
+      ||sobj.id==id
+    )
       return msg(x(w.Cantputon,sobj,dobj))
+  if(isContainer(dobj)){
+    if(dobj.closed)
+      return msg(x(w.Cantdo)+' '+x(w.Itsclosed,dobj))
+    remove(world.carried,sobj.id)
+    addObj(dobj,sobj)
+    msg(x(w.Youput,sobj,dobj))
+    return showAll()
   }
+  if(isRoom(dobj)||isSupporter(dobj)){
+    remove(world.carried,sobj.id)
+    addObj(dobj,sobj)
+    msg(x(w.Youput,sobj,dobj))
+    return showAll()
+  }
+  return msg(x(w.Cantputon,sobj,dobj))
 }
 function doopen(id){
+  if(id=='@inventory')
+    return msg(x(w.Cantdo))
   var obj=getObj(id)
   if(!isvisible(obj))
     return msg(x(w.Cantsee,obj))
+  if(!isreachable(obj))
+    return msg(x(w.Cantreach,obj))
+  if(!isContainer(obj))
+    return msg(x(w.Cantopen,obj))
   if(!obj.closed)
-    return msg(x(w.Alreadyopen,obj))
+    return msg(x(w.Alreadyopenclosed,obj))
   if(!obj.closable)
     return msg(x(w.Cantopen,obj))
   obj.closed=false
@@ -1200,11 +1443,17 @@ function doopen(id){
   showAll()
 }
 function doclose(id){
+  if(id=='@inventory')
+    return msg(x(w.Cantdo))
   var obj=getObj(id)
   if(!isvisible(obj))
     return msg(x(w.Cantsee,obj))
+  if(!isreachable(obj))
+    return msg(x(w.Cantreach,obj))
+  if(!isContainer(obj))
+    return msg(x(w.Cantclose,obj))
   if(obj.closed)
-    return msg(x(w.Alreadyclosed,obj))
+    return msg(x(w.Alreadyopenclosed,obj))
   if(!obj.closable)
     return msg(x(w.Cantclose,obj))
   obj.closed=true
@@ -1212,6 +1461,8 @@ function doclose(id){
   showAll()
 }
 function doeat(id){
+  if(id=='@inventory')
+    return msg(x(w.Cantdo))
   var obj=getObj(id)
   if(obj.loc!='@carried')
     dotake(id)
@@ -1226,26 +1477,38 @@ function doeat(id){
   showAll()
 }
 function doread(id){
+  if(id=='@inventory')
+    msg(x(w.Cantdo))
+  if(!isvisible(obj))
+    return msg(x(w.Cantsee,obj))
   var obj=getObj(id)
   if(!obj.readable)
     return msg(x(w.Cantread,obj))
   msg(x(w.Youread,obj)+x(obj.text))
 }
 function doswitchon(id){
+  if(id=='@inventory')
+    return msg(x(w.Cantdo))
   var obj=getObj(id)
+  if(!isvisible(obj))
+    return msg(x(w.Cantsee,obj))
   if(!obj.switchable)
     return msg(x(w.Cantswitchon,obj))
   if(obj.switchedon)
-    return msg(x(w.Alreadyswitchedon,obj))
+    return msg(x(w.Alreadyswitched,obj))
   obj.switchedon=true
   msg(x(w.Youswitchon,obj))
 }
 function doswitchoff(id){
+  if(id=='@inventory')
+    return msg(x(w.Cantdo))
   var obj=getObj(id)
+  if(!isvisible(obj))
+    return msg(x(w.Cantsee,obj))
   if(!obj.switchable)
     return msg(x(w.Cantswitchoff,obj))
   if(!obj.switchedon)
-    return msg(x(w.Alreadyswitchedoff,obj))
+    return msg(x(w.Alreadyswitched,obj))
   obj.switchedon=false
   msg(x(w.Youswitchoff,obj))
 }
@@ -1254,38 +1517,46 @@ function doswitchoff(id){
 
 function showRoom(){
   var room=getRoom()
-  var str='<h2 id="'+room.id+'" draggable="false" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)">'+cap(x(room.name))+'</h2><p>'
-    +mark(x(room.desc,room),true)
-  if(room.objects.length>0){
-    var empty=true
-    for(var ct=0;ct<room.objects.length;ct++)
-      if(!getObj(room.objects[ct]).scenery){
-        empty=false
-        break
-      }
-    if(!empty)
-      str+='<p>'+yousee(room,true)
-    for(var ct=0;ct<room.objects.length;ct++){
-      var obj=getObj(room.objects[ct])
-      if(obj.objects&&obj.objects.length>0&&(obj.type!='container'||obj.transparent||!obj.closed))
-        str+="<p>"+(obj.type=="supporter"||obj.type=="mount"?onyousee:inyousee)(obj,false,true)
+  var title=cap(x(room.name))
+  if(world.loc!=room.id)
+    title+=' ('+x(w.intheobject,getObj(world.loc))+')'
+  var str='<h2 id="'+room.id+'" draggable="false" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)">'+title+'</h2><p>'
+  if(isvisible(room)){
+    str+=mark(x(room.desc,room),true)
+    if(room.objects.length>0){
+      var empty=true
+      for(const id of room.objects)
+        if(!getObj(id).scenery){
+          empty=false
+          break
+        }
+      if(!empty)
+        str+='<p>'+yousee(room,true)
     }
   }
-  str+='<p>'+(room.id.charAt(0)=='@'?menulist(room.exits,true):listexits(room,true))
+  for(const id of room.objects){
+    var obj=getObj(id)
+    if(isvisible(obj)){
+      if(obj.objects&&obj.objects.length>0&&(obj.type!='container'||obj.transparent||!obj.closed||isinsidevisible(obj)))
+        str+="<p>"+inyousee(obj,obj.closed,true)
+    }
+  }
+if(isvisible(room))
+    str+='<p>'+(room.id.charAt(0)=='@'?menulist(room.exits,true):listexits(room,true))
   inner('$room',str)
 }
 function showInventory(){
-  var str='<h3 id="@inventory" draggable="false" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)">'+x(w.Inventory)+"</h3>"
+  var str='<h3 id="@inventory" draggable="true" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)">'+x(w.Inventory)+"</h3>"
   str+=youcarryandwear(true)
-  for(var ct=0;ct<world.carried.length;ct++){
-    var obj=getObj(world.carried[ct])
+  for(const id of world.carried){
+    var obj=getObj(id)
     if(obj.objects&&obj.objects.length>0&&(obj.type!='container'||obj.transparent||!obj.closed))
-      str+="<p>"+(obj.type=="supporter"||obj.type=="mount"?onyousee:inyousee)(obj,false,true)
+      str+="<p>"+inyousee(obj,false,true)
   }
-  for(var ct=0;ct<world.worn.length;ct++){
-    var obj=getObj(world.worn[ct])
+  for(const id of world.worn){
+    var obj=getObj(id)
     if(obj.objects&&obj.objects.length>0&&(obj.type!='container'||obj.transparent||!obj.closed))
-      str+="<p>"+(obj.type=="supporter"||obj.type=="mount"?onyousee:inyousee)(obj,false,true)
+      str+="<p>"+inyousee(obj,false,true)
   }
   inner('$inventory',str)
 }
@@ -1358,70 +1629,67 @@ cioè esaminare gli oggetti corrispondenti, muoverti attraverso un'uscita, ecc.<
 <br>Puoi anche trascinare verbi e spostare parole su 'Inventario' o sul nome della stanza.
 Tenta diverse combinazioni!</li></ul>`
 }
-var t=new Thing('@help-cube')
-t.name={en:"cube",it:"cubo"}
+var t=new Thing('cube')
+addName(t,'it','cubo')
 t.desc={
-  en:"A small {@help-cube}. <i>Drag it on the inventory or on other objects.</i>",
-  it:"Un piccolo {@help-cube}. <i>Trascinalo sull'inventario o su altri oggetti.</i>"
+  en:"A small {cube}. <i>Drag it on the inventory or on other objects.</i>",
+  it:"Un piccolo {cube}. <i>Trascinalo sull'inventario o su altri oggetti.</i>"
 }
 addObj(r,t)
-var t2=new Supporter('@help-chair')
-t2.name={en:"chair",it:"sedia"}
-t2.desc={
-  en:"A {@help-chair}.",
-  it:"Una {@help-chair}."
-}
-t2.enterable=true
+var t2=new Supporter('chair')
+addName(t2,'it','sedia')
+t2.it_femminile=true
+t2.desc={en:"A {chair}.",it:"Una {chair}."}
+t2.seatable=true
 addObj(r,t2)
-t2=new Supporter('@help-table')
-t2.name={en:"table",it:"tavolo"}
+t2=new Supporter('table')
+addName(t2,'it','tavolo')
 t2.desc={
-  en:"A {@help-table}. <i>Drag objects on it.</i>",
-  it:"Un {@help-table}. <i>Trascina oggetti su di esso.</i>"
+  en:"A {table}. <i>Drag objects on it.</i>",
+  it:"Un {table}. <i>Trascina oggetti su di esso.</i>"
 }
 t2.fixedinplace=true
 addObj(r,t2)
-t=new Thing('@help-apple')
-t.name={en:"apple",it:"mela"}
+t=new Thing('apple')
+addName(t,'it','mela')
 t.it_femminile=true
 t.edible=true
 t.desc={
-  en:"A {@help-apple}. <i>Try to eat it.</i>",
-  it:"Una {@help-apple}. <i>Prova a mangiarla.</i>"
+  en:"A {apple}. <i>Try to eat it.</i>",
+  it:"Una {apple}. <i>Prova a mangiarla.</i>"
 }
 addObj(t2,t)
-t=new Thing('@help-lamp')
-t.name={en:"lamp",it:"lampada"}
+t=new Thing('lamp')
+addName(t,'it','lampada')
 t.it_femminile=true
 t.switchable=true
-t.desc={en:"A [on or off] {@help-lamp}.",it:"Una {@help-lamp} [acceso o spento]."}
+t.desc={en:"A [on or off] {lamp}.",it:"Una {lamp} [acceso o spento]."}
 addObj(t2,t)
-t2=new Supporter('@help-hanger')
-t2.name={en:"hanger",it:"attaccapanni"}
-t2.desc={
-  en:"A {@help-hanger}.",
-  it:"Un {@help-hanger}."
-}
-t2.fixedinplace=true
-addObj(r,t2)
-t=new Thing('@help-hat')
-t.name={en:"hat",it:"cappello"}
-t.wearable=true
+t=new Container('box')
+addName(t,'it','scatola')
+t.it_femminile=true
 t.desc={
-  en:"A {@help-hat}. <i>Drag it twice on 'Inventory' to wear it.</i>",
-  it:"Un {@help-hat}. <i>Trascinalo due volte su 'Inventario' per indossarlo.</i>"
-}
-addObj(t2,t)
-t=new Container('@help-box')
-t.name={en:"box",it:"scatola"}
-t.desc={
-  en:"An [open or closed] {@help-box}. <i>Drag objects on it.</i>[endif]",
-  it:"Una {@help-box} [aperto o chiuso]. <i>Trascina oggetti su di essa.</i>"
+  en:"A small [open or closed] {box}. <i>Drag objects on it.</i>",
+  it:"Una piccola {box} [aperto o chiuso]. <i>Trascina oggetti su di essa.</i>"
 }
 t.closed=false
 t.closable=true
-t.it_femminile=true
-addObj(r,t)
+addObj(t2,t)
+t2=new Supporter('hanger')
+addName(t2,'it','attaccapanni')
+t2.desc={en:"A {hanger}.",it:"Un {hanger}."}
+t2.climbable=true
+t2.fixedinplace=true
+t2.refuses=['-wearable']
+addObj(r,t2)
+t=new Thing('hat')
+addName(t,'it','cappello')
+t.wearable=true
+t.desc={
+  en:"A {hat}. <i>Drag it twice on 'Inventory' to wear it.</i>",
+  it:"Un {hat}. <i>Trascinalo due volte su 'Inventario' per indossarlo.</i>"
+}
+addObj(t2,t)
 
 t=new Exit("Go to the other room",r,'help-other')
 addName(t,"it","Vai all'altra stanza")
@@ -1439,8 +1707,34 @@ r.desc={
   it:"Questa è un'altra stanza. Torna indietro usando un'uscita visibile."
 }
 
+t=new Container('cage')
+t.name={en:"large cage",it:"grande gabbia"}
+t.it_femminile=true
+t.desc={
+  en:"A large [open or closed] {cage}.",
+  it:"Una grande {cage} [aperto o chiuso]."
+}
+t.closed=false
+t.closable=true
+t.enterable=true
+t.transparent=true
+t.fixedinplace=true
+addObj(r,t)
+t=new Container('wardrobe')
+addName(t,'it','armadio')
+t.desc={
+  en:"A large [open or closed] {wardrobe}.",
+  it:"Una grande {wardrobe} [aperto o chiuso]."
+}
+t.closed=true
+t.closable=true
+t.enterable=true
+t.fixedinplace=true
+addObj(r,t)
+
 t=new Exit("Exit",r,'@help')
 addName(t,"it","Uscita")
+t.it_femminile=true
 
 world=worlds['@world']
 
@@ -1450,6 +1744,7 @@ world=new World('@world-about')
 
 r=new Room('@about')
 r.name="HyperFable"
+r.proper=true
 r.desc={
 en:
 `An <i>HTML5</i> interface for <i>Interactive Fiction</i> stories (<a href="https://github.com/YouDevIt/HyperFable">GitHub&nbsp;repository</a>).
@@ -1489,8 +1784,7 @@ en:'<p><a rel="license" href="http://creativecommons.org/licenses/by-nc-nd/4.0/"
 it:'<p><a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/deed.it"><img alt="Creative Commons License" style="border-width:0" src="'+imgcc
   +'" /></a><br />Quest\'opera è concessa sotto <a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/deed.it">Licenza Internazionale Creative Commons Attribuzione-Non Commerciale-Non opere derivate 4.0</a>.'
 }
-world.carried.push(t.id)
-t.loc='@carried'
+carry(t)
 
 t=new Portal("@help-exit",r,'@intro','@world')
 t.name={en:'Back to the game',it:'Torna al gioco'}

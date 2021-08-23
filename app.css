@@ -93,7 +93,7 @@ a:active{color:var(--active-color);}
   display:inline-block;
   box-shadow:4px 4px 4px var(--box-shadow);
   width:40px;
-  outline:2px solid var(--outline-high);
+  outline:3px solid var(--outline-high);
 }
 
 .dark,.edit{

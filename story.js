@@ -11,7 +11,7 @@ i.author="Leonardo Boselli"
 i.email="leonardo.boselli@youdev.it"
 i.subtitle={en:"A simple example",it:"Un semplice esempio"}
 i.release="1"
-i.date="2021-08-07"
+i.date="2021-08-23"
 i.code="EXST"
 
 t=new Exit("Start",i,'kitchen')
