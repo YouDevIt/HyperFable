@@ -20,22 +20,22 @@ var langtag='en'
 function changelang(code){
   if(langtag==code)
     return msg(x(w.Langalready))
+  var oldlangtag=langtag
   langtag=code
-  flagtoggle('$en')
-  flagtoggle('$it')
+  localStorage.setItem('HyFa-lang',langtag);
+  var flags=document.getElementsByClassName("flag");
+  for(const flag of flags)
+    if(flag.id=='$'+langtag||flag.id=='$'+oldlangtag)
+      flagtoggle(flag)
   getel("$savefile").innerHTML=x(w.SAVEFILE)
   getel("$loadfile").innerHTML=x(w.LOADFILE)
-  getel("$save").innerHTML=x(w.SAVE)
   getel("$restore").innerHTML=x(w.RESTORE)
   getel("$restart").innerHTML=x(w.RESTART)
+  getel("$save").innerHTML=x(w.SAVE)
   showAll()
   msg(x(w.Langchanged))
 }
-function flagtoggle(el){
-  var flag=getel(el)
-  flag.classList.toggle('flag-norm')
-  flag.classList.toggle('flag-high')
-}
+function flagtoggle(el){el.classList.toggle('high')}
 
 function x(sentence,obj1,obj2,dec1,dec2){
   if(isString(sentence))
@@ -97,6 +97,8 @@ function decode_en(p1,obj1,obj2,dec1,dec2){
       return listobjs(o,dec)
     case "list of actions":
       return listactions(obj1,obj2)
+    case "list of topics":
+      return listtopics(obj1,obj2)
     case 'it':
       return o.en_plural?'them':o.en_male?'him':o.en_female?'her':'it'
     case 'open or closed':
@@ -151,10 +153,14 @@ function decode_it(p1,obj1,obj2,dec1,dec2){
       return listobjs(o,dec)
     case "lista di azioni":
       return listactions(obj1,obj2)
+    case "lista di argomenti":
+      return listtopics(obj1,obj2)
     case 'è':
       return o.it_plurale?'sono':'è'
     case 'o':
       return o.it_femminile?(o.it_plurale?'e':'a'):(o.it_plurale?'i':'o')
+    case 'gli':
+      return o.it_plurale?'e loro':(o.it_femminile?'le':'gli')
     case 'by':
       return 'di'
     case 'aperto o chiuso':
@@ -301,7 +307,8 @@ var w={
   Nospecial:{
     en:"You see nothing special in [the object].",
     it:"Non noti nulla di speciale [nell'oggetto]."},
-  Inventory:{en:"Inventory",it:"Inventario"},
+  Character:{en:"Yourself",it:"Te stess[o]"},
+  Chardesc:{en:"as good-looking as ever",it:"bell[o] come sempre"},
   Yougoto:{
     en:"You go to [the object].",
     it:"Vai verso [l'oggetto]."
@@ -319,20 +326,12 @@ var w={
     it:"[In/su oggetto] vedi [una lista di oggetti2]."
   },
   Carring:{
-    en:"You carry [a list of objects].",
-    it:"Porti [una lista di oggetti].",
-  },
-  Carringand:{
     en:"You carry [a list of objects]",
     it:"Porti [una lista di oggetti]",
   },
-  Wearing:{
-    en:"You wear [a list of objects].",
-    it:"Indossi [una lista di oggetti]."
-  },
-  andwearing:{
-    en:" and you wear [a list of objects].",
-    it:" e indossi [una lista di oggetti]."
+  wearing:{
+    en:"you wear [a list of objects].",
+    it:"indossi [una lista di oggetti]."
   },
   Youwear:{
     en:"You wear [the object].",
@@ -501,6 +500,24 @@ var w={
     it:"Non puoi perché sei [in/su oggetto]."
   },
   intheobject:{en:"[in] [the object]",it:"[in/su oggetto]"},
+  Youcanask:{
+    en:"You could ask [list of topics]",
+    it:"Potresti chieder[gli] [lista di argomenti]"
+  },
+  youcantell:{
+    en:"you could tell about [list of topics]",
+    it:"Potresti parlar[gli] di [lista di argomenti]"
+  },
+  butdontanswer:{
+    en:", but [the object] doesn't know what to answer.",
+    it:", ma [l'oggetto] non sa cosa rispondere."
+  },
+  dutdonttell:{
+    en:", but [the object] doesn't seem interested in the argument.",
+    it:", ma [l'oggetto] non sembra interessato all'argomento."
+  },
+  Canttalk:{en:"You can't talk to [the object].",it:"Non puoi parlare [all'oggetto]."},
+  Canttalkabout:{en:"You can't talk about [the object].",it:"Non puoi parlare [dell'oggetto]."},
 }
 
 // english grammar rules
@@ -567,7 +584,7 @@ var it={
       if(obj.it_femminile)
         return num==0?"un'":'una '
       else
-        return num==0?'un ':'uno '
+        return num==0?'uno ':'un '
     }
   },
   prepdi:function(obj){return it.prepart('di',obj)},
@@ -653,7 +670,7 @@ function addDesc(obj,newlang,newdesc){
 function Group(id,type){
   Object.call(this,id,type||'group')
   this.objects=[]
-  this.refuses=[]
+  this.rules=[]
 }
 function addObj(group,obj){
   group.objects.push(obj.id)
@@ -662,9 +679,15 @@ function addObj(group,obj){
 
 function Person(id){
   Group.call(this,id,'person')
+  this.topics=[]
   this.wears=[]
 }
 function isPerson(obj){return obj.type=='person'}
+
+var character=new Person('@character')
+character.name={en:'Yourself',it:'Te stess[o]'}
+character.desc={en:'as good-looking as ever',it:'bell[o] come sempre'}
+world.character=character
 
 function Room(id){
   Group.call(this,id,'room')
@@ -723,8 +746,10 @@ function isSupporter(obj){
 }
 function isMount(obj){return obj.type=='mount'}
 
-function Topic(id){
+function Topic(id,person){
   Object.call(this,id,'topic')
+  if(person)
+    person.topics.push(id)
 }
 function isTopic(obj){return obj.type='topic'}
 
@@ -812,7 +837,15 @@ function innerobject(obj,dec) {
     +name+'</span>'
 }
 function inneraction(actionid,obj){
-  return '<span class="action" id="'+actionid+' '+obj.id+'" draggable="true" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)" onclick="clickon(event)">'+x(w[actionid],obj)+'</span>'
+  return '<span class="action" id="'+actionid+' '+obj.id
+    +'" draggable="true" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)" onclick="clickon(event)">'
+    +x(w[actionid],obj)+'</span>'
+}
+function innertopic(topicid,obj){
+  var topic=x(getObj(topicid).name)
+  return '<span class="topic" id="'+topicid+' '+obj.id
+    +'" draggable="true" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)" onclick="clickon(event)">'
+    +topic+'</span>'
 }
 
 function mark(text,dec){
@@ -837,20 +870,14 @@ function inyousee(obj,dec1,dec2){
 function youcarry(dec){
   return x(w.Carring,world.carried,null,dec,dec)
 }
-function youcarryand(dec){
-  return x(w.Carringand,world.carried,null,dec,dec)
-}
-function andyouwear(dec){
-  return x(w.andwearing,world.worn,null,dec,dec)
-}
 function youwear(dec){
-  return x(w.Wearing,world.worn,null,dec,dec)
+  return x(w.wearing,world.worn,null,dec,dec)
 }
 function youcarryandwear(dec){
   if(world.carried.length>0)
-    return youcarryand(dec)+(world.worn.length>0?andyouwear(dec):'.')
+    return youcarry(dec)+(world.worn.length>0?x(w.and)+youwear(dec):'.')
   if(world.worn.length>0)
-    return youwear(dec)
+    return cap(youwear(dec))
   return x(w.Youcarrynothing)
 }
 
@@ -910,6 +937,17 @@ function listactions(array,obj){
   ret+=x(w.or)+inneraction(array[array.length-1],obj)
   return ret
 }
+function listtopics(array,obj){
+  if(array.length==0)
+    return x(w.nothing)
+  ret=innertopic(array[0],obj)
+  if(array.length==1)
+    return ret
+  for(var ct=1;ct<array.length-1;ct++)
+    ret+=", "+innertopic(array[ct],obj)
+  ret+=x(w.or)+innertopic(array[array.length-1],obj)
+  return ret
+}
 
 //// interface
 
@@ -950,6 +988,8 @@ function drag(ev) {
   var id=ev.target.id
   if(ev.target.className=="action")
     id="*"+id.split(" ")[0]
+  else if(ev.target.className=="topic")
+    id="%"+id.split(" ")[0]
   ev.dataTransfer.setData("text",id)
 }
 function drop(ev) {
@@ -960,9 +1000,15 @@ function drop(ev) {
     if(ev.target.className=="action")
       return msg(x(w.Cantdo))
     return perform(source.substring(1),drain)
+  }else if(source.charAt(0)=="%"){
+    if(ev.target.className=="topic")
+      return msg(x(w.Cantdo))
+    return talkto(source.substring(1),drain)
   }
   if(ev.target.className=="action")
     return perform(drain.split(" ")[0],source)
+  if(ev.target.className=="topic")
+    return talkto(drain.split(" ")[0],source)
   dragndrop(source,drain)
 }
 
@@ -1074,6 +1120,10 @@ function clickon(ev){
     var words=ev.target.id.split(' ')
     return perform(words[0],words[1],words[2])
   }
+  if(ev.target.className=='topic'){
+    var words=ev.target.id.split(' ')
+    return talkto(words[0],words[1])
+  }
   var obj=getObj(ev.target.id)
   if(!obj)
     return msg(x(w.Cantseethat))
@@ -1098,6 +1148,26 @@ function wear(obj){
   obj.loc='@worn'
 }
 
+function talkto(topicid,talkerid){
+  var talker=getObj(talkerid)
+  if(!isPerson(talker))
+    return msg(x(w.Canttalk,talker))
+  var topic=getObj(topicid)
+  if(!isTopic(topic))
+    return msg(x(w.Canttalkabout,topic))
+  var str=x(topic.request,talker)
+  str+=(talker.topics.indexOf(topicid)<0?
+    (topic.question?w.butdontanswer:w.butdonttell,talker):
+    ('<br>'+x(topic.response,talker)))
+  if(topic.remove)
+    for(const id of topic.remove)
+      remove(talker.topics,id)
+  remove(talker.topics,topicid)
+  if(topic.add)
+    for(const id of topic.add)
+      talker.topics.push(id)
+  msg(str+suggesttopics(talker))
+}
 function moveto(id){
   var obj=getObj(id)
   if(!obj.enterable&&!obj.seatable&&!obj.climbable){
@@ -1152,26 +1222,27 @@ function examine(obj){
     return msg(x(w.Cantsee,obj))
   var str=mark(x(obj.desc||w.Nospecial,obj))
   str+=suggestactions(obj)
+  str+=suggesttopics(obj)
   if(obj.objects&&obj.objects.length>0&&(obj.type!='container'||obj.transparent||!obj.closed))
-      str+="<br>"+inyousee(obj)
+    str+="<br>"+inyousee(obj)
   msg(str)
 }
 
 function suggestactions(obj){
   var actions=[]
   switch(obj.type){
-    case "container":
+    case 'container':
       if(obj.closable)
-        actions.push(obj.closed?"open":"close")
-    case "supporter":
-    case "thing":
+        actions.push(obj.closed?'open':'close')
+    case 'supporter':
+    case 'thing':
       if(!isFixed(obj)){
-        if(obj.loc=="@carried")
+        if(obj.loc=='@carried')
           actions.push('drop')
-        else if(obj.loc!="@worn")
+        else if(obj.loc!='@worn')
           actions.push('take')
         if(obj.wearable)
-          if(obj.loc=="@worn")
+          if(obj.loc=='@worn')
             actions.push('remove')
           else
             actions.push('wear')
@@ -1190,7 +1261,18 @@ function suggestactions(obj){
         actions.push(obj.switchedon?'switchoff':'switchon')
       break
   }
-  return actions.length>0?"<br>"+x(w.Youcando,actions,obj):""
+  return actions.length>0?'<br>'+x(w.Youcando,actions,obj):''
+}
+
+function suggesttopics(obj){
+  if(!obj.topics)
+    return ''
+  var asks=[], tells=[]
+  for(const topicid of obj.topics)
+    (getObj(topicid).question?asks:tells).push(topicid)
+  if(asks.length>0)
+    return '<br>('+x(w.Youcanask,asks,obj)+(tells.length>0?(x(w.or)+x(w.youcantell,tells,obj)):'')+')'
+  return tells.length>0?'<br>('+cap(x(w.youcantell,tells,obj))+')':''
 }
 
 // actions
@@ -1401,10 +1483,10 @@ function doput(id,toid){
     return
   if(!dobj.objects)
     return msg(x(w.Cantputon,sobj,dobj))
-  for(const id of dobj.refuses)
+  for(const id of dobj.rules)
     if(
-      (id.charAt(0)=='+'&&sobj[id.substring(1)])
-      ||(id.charAt(0)=='-'&&!sobj[id.substring(1)])
+      (id.charAt(0)=='-'&&sobj[id.substring(1)])
+      ||(id.charAt(0)=='+'&&!sobj[id.substring(1)])
       ||sobj.id==id
     )
       return msg(x(w.Cantputon,sobj,dobj))
@@ -1521,6 +1603,8 @@ function showRoom(){
   if(world.loc!=room.id)
     title+=' ('+x(w.intheobject,getObj(world.loc))+')'
   var str='<h2 id="'+room.id+'" draggable="false" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)">'+title+'</h2><p>'
+  if(room.entering&&!room.visited)
+    str+='<i>'+x(room.entering)+'</i><p>'
   if(isvisible(room)){
     str+=mark(x(room.desc,room),true)
     if(room.objects.length>0){
@@ -1541,12 +1625,15 @@ function showRoom(){
         str+="<p>"+inyousee(obj,obj.closed,true)
     }
   }
-if(isvisible(room))
+  if(isvisible(room))
     str+='<p>'+(room.id.charAt(0)=='@'?menulist(room.exits,true):listexits(room,true))
+  room.visited=true
   inner('$room',str)
 }
 function showInventory(){
-  var str='<h3 id="@inventory" draggable="true" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)">'+x(w.Inventory)+"</h3>"
+  var str='<font size="+2"><b id="@inventory" draggable="true" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)">'
+    +x(world.character?world.character.name:w.Character,world.character)+"</b></font>, "
+    +x(world.character?world.character.desc:w.Chardesc,world.character)+".<p>"
   str+=youcarryandwear(true)
   for(const id of world.carried){
     var obj=getObj(id)
@@ -1579,6 +1666,12 @@ window.onload=function(){
     getel("themecheckbox").checked=true
     darkMode=true
   }
+  const currentLang=localStorage.getItem("HyFa-lang")
+  langtag=currentLang||langdef
+  var flags=document.getElementsByClassName("flag");
+  for(const flag of flags)
+    if(flag.id=='$'+langtag)
+      flagtoggle(flag)
   for(var ct=1;ct<=9;ct++){
     var el=document.createElement("li")
     el.id="$msg"+ct
@@ -1606,6 +1699,7 @@ function loadfile(ev) {
 //// help
 
 world=new World('@world-help')
+world.character=character
 
 var r=new Room('@help')
 r.name={en:"tutorial room",it:"stanza del tutorial"}
@@ -1613,27 +1707,27 @@ r.it_femminile=true
 r.desc={
 en:
 `This story was created using <b><a href='https://github.com/YouDevIt/HyperFable'>HyperFable</a></b>,
-an <i>HTML5</i> interface for <i>Interactive Fiction</i> works, written by
+an <i>HTML5</i> interface for <i>Interactive Fiction</i> works, created by
 <a href='mailto:leonardo.boselli@youdev.it'>Leonardo Boselli</a>.
-<p>The main actions to play are:<ul><li>Click on the highlighted words to perform the default action,
-i.e. to examine the corresponding objects, move through an exit, etc.</li><li>Drag and drop the words
+<p>The main actions to interact:<ul><li>Click on the highlighted words to perform the default action,
+i.e. examine the corresponding objects, move through an exit, etc.</li><li>Drag and drop the words
 to move the objects around, apply actions, and so on.<br>You can even drag verbs and drop words on
-'Inventory', or the room name. Try different combinations!</li></ul>`
+the character's name, or the name of the room. Try different combinations!</li></ul>`
 ,it:
 `Questa storia è stata creata con <b><a href='https://github.com/YouDevIt/HyperFable'>HyperFable</a></b>,
-un'interfaccia <i>HTML5</i> per lavori di <i>Narrativa Interattiva</i> works, scritta da
+un'interfaccia <i>HTML5</i> per lavori di <i>Narrativa Interattiva</i>, creata da
 <a href='mailto:leonardo.boselli@youdev.it'>Leonardo Boselli</a>.
-<p>Le principali azione per giocare sono:<ul><li>Clicca sulle parole evidenziate per effettuare l'azione di base,
+<p>Le principali azioni per interagire:<ul><li>Clicca sulle parole evidenziate per effettuare l'azione di base,
 cioè esaminare gli oggetti corrispondenti, muoverti attraverso un'uscita, ecc.</li><li>Trascina e rilascia
 (drag & drop) le parole per cambiare la posizione degli oggetti, applicare azioni e così via.
-<br>Puoi anche trascinare verbi e spostare parole su 'Inventario' o sul nome della stanza.
+<br>Puoi anche trascinare verbi e spostare parole sul nome del personaggio o sul nome della stanza.
 Tenta diverse combinazioni!</li></ul>`
 }
 var t=new Thing('cube')
 addName(t,'it','cubo')
 t.desc={
-  en:"A small {cube}. <i>Drag it on the inventory or on other objects.</i>",
-  it:"Un piccolo {cube}. <i>Trascinalo sull'inventario o su altri oggetti.</i>"
+  en:"A small {cube}. <i>Drag it on the character's name, or other objects.</i>",
+  it:"Un piccolo {cube}. <i>Trascinalo sul nome del personaggio o su altri oggetti.</i>"
 }
 addObj(r,t)
 var t2=new Supporter('chair')
@@ -1648,6 +1742,7 @@ t2.desc={
   en:"A {table}. <i>Drag objects on it.</i>",
   it:"Un {table}. <i>Trascina oggetti su di esso.</i>"
 }
+t2.enterable=true
 t2.fixedinplace=true
 addObj(r,t2)
 t=new Thing('apple')
@@ -1678,16 +1773,15 @@ addObj(t2,t)
 t2=new Supporter('hanger')
 addName(t2,'it','attaccapanni')
 t2.desc={en:"A {hanger}.",it:"Un {hanger}."}
-t2.climbable=true
 t2.fixedinplace=true
-t2.refuses=['-wearable']
+t2.rules=['+wearable']
 addObj(r,t2)
 t=new Thing('hat')
 addName(t,'it','cappello')
 t.wearable=true
 t.desc={
-  en:"A {hat}. <i>Drag it twice on 'Inventory' to wear it.</i>",
-  it:"Un {hat}. <i>Trascinalo due volte su 'Inventario' per indossarlo.</i>"
+  en:"A {hat}. <i>Drag it twice on the character's name to wear it.</i>",
+  it:"Un {hat}. <i>Trascinalo due volte sul nome del personaggio per indossarlo.</i>"
 }
 addObj(t2,t)
 
@@ -1695,7 +1789,7 @@ t=new Exit("Go to the other room",r,'help-other')
 addName(t,"it","Vai all'altra stanza")
 
 t=new Portal("@help-exit",r,'@intro','@world')
-t.name={en:'Back to the game',it:'Torna al gioco'}
+t.name={en:'Back to the story',it:'Torna alla storia'}
 
 t=new Portal("About",r,'@about','@world-about')
 
@@ -1741,6 +1835,7 @@ world=worlds['@world']
 //// about
 
 world=new World('@world-about')
+world.character=character
 
 r=new Room('@about')
 r.name="HyperFable"
@@ -1787,7 +1882,7 @@ it:'<p><a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/
 carry(t)
 
 t=new Portal("@help-exit",r,'@intro','@world')
-t.name={en:'Back to the game',it:'Torna al gioco'}
+t.name={en:'Back to the story',it:'Torna alla storia'}
 
 t=new Portal("Help",r,'@help','@world-help')
 addName(t,"it","Aiuto")

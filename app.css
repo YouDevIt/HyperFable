@@ -11,6 +11,7 @@ body{
   --custom-active-back:#f00;
   --custom-hover:#f88;
   --action-color:#000;
+  --person-color:#000;
   --room-color:#808;
   --exit-color:#800;
   --thing-color:#00f;
@@ -39,6 +40,7 @@ body.dark-theme{
   --custom-active-back:#0ff;
   --custom-hover:#077;
   --action-color:#fff;
+  --person-color:#fff;
   --room-color:#f6f;
   --exit-color:#f66;
   --thing-color:#99f;
@@ -83,13 +85,13 @@ a:visited{color:var(--visited-color);}
 a:hover{color:var(--hover-color);}
 a:active{color:var(--active-color);}
 
-.flag-norm{
+.flag:not(high){
   display:inline-block;
   box-shadow:4px 4px 4px var(--box-shadow);
   width:40px;
   outline:2px solid var(--outline-norm);
 }
-.flag-high{
+.flag.high{
   display:inline-block;
   box-shadow:4px 4px 4px var(--box-shadow);
   width:40px;
@@ -123,7 +125,7 @@ input[type="file"] {
   box-shadow:none;
 }
 
-.action{
+.action,.topic{
   font-style:italic;
   font-weight:normal;
   color:var(--action-color);
@@ -178,7 +180,19 @@ input[type="file"] {
   padding:0px 8px 0px 8px;
   box-shadow:2px 2px 4px var(--box-shadow);
 }
-.person,.vehicle,.mount{
+.person{
+  font-weight:bold;
+  color:var(--person-color);
+  cursor:move;
+}
+.person.dec{
+  border:1px dotted var(--decor-border);
+  background-color:var(--decor-back);
+  color:var(--default-color);
+  padding:2px 8px 2px 8px;
+  cursor:move;
+}
+.vehicle,.mount{
   border:2px dashed var(--decor-border);
   background-color:var(--decor-back);
   font-weight:bolder;
