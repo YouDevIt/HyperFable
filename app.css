@@ -1,6 +1,7 @@
 body{
   --body-back:#ddb;
   --content-back:#ffe;
+  --header-back:#ffc;
   --box-shadow:#aaa;
   --outline-norm:#000;
   --outline-high:#f00;
@@ -30,6 +31,7 @@ body{
 body.dark-theme{
   --body-back:#224;
   --content-back:#002;
+  --header-back:#003;
   --box-shadow:#000;
   --outline-norm:#000;
   --outline-high:#0ff;
@@ -57,9 +59,8 @@ body.dark-theme{
 }
 
 body{
-  padding:16px 0 0 16px;
   font-family:'Courier New',monospace;
-  font-size:18px;
+  font-size:16px;
   text-shadow:2px 2px 4px var(--box-shadow);
   background-color:var(--body-back);
   color:var(--default-color);
@@ -67,14 +68,44 @@ body{
   -ms-user-select:none;
   user-select:none;
 }
-
+  
 .content{
   margin:0 120px 0 0;
-  padding:1em 2em;
+  padding:8px 8px;
   background-color:var(--content-back);
   box-shadow:4px 4px 4px var(--box-shadow);
   border-radius:2em 2em;
   border:1px dotted var(--box-shadow);
+  -moz-transition: height 1s ease-in-out, left 1.5s ease-in-out;
+  -webkit-transition: height 1s ease-in-out, left 1.5s ease-in-out;
+  -moz-transition: height 1s ease-in-out, left 1.5s ease-in-out;
+  -o-transition: height 1s ease-in-out, left 1.5s ease-in-out;
+  transition: height 1s ease-in-out, left 1.5s ease-in-out;
+}
+
+.header{
+  position:sticky;
+  top:0;
+  padding:0em 1em;
+  margin-bottom:4px;
+  background-color:var(--header-back);
+  z-index:1;
+  box-shadow:4px 4px 4px var(--box-shadow);
+  border-radius:2em 2em;
+  border:1px dotted var(--box-shadow);
+}
+
+.message{
+  padding:1em;
+  margin:1em 0 1em 0;
+  background-color:var(--content-back);
+  border:1px dotted var(--box-shadow);
+  box-shadow: inset 4px 4px 4px var(--box-shadow);
+}
+
+.footer{
+  padding:1em 1em;
+  background-color:var(--content-back);
 }
 
 p{line-height:125%;}
@@ -100,7 +131,7 @@ a:active{color:var(--active-color);}
 
 .dark,.edit{
   font-family:arial;
-  font-size:13px;
+  font-size:12px;
 }
 
 input[type="file"] {
@@ -108,7 +139,7 @@ input[type="file"] {
 }
 .custom-file-upload {
   font-family:arial;
-  font-size:13px;
+  font-size:12px;
   border:2px solid var(--custom-border);
   background-color:var(--custom-back);
   display:inline-block;
@@ -204,7 +235,6 @@ input[type="file"] {
 table.menu{
   position:fixed;
   right:4px;
-  top:24px;
   width:120px;
 }
 
@@ -216,6 +246,8 @@ li.msg:first-child{font-weight:bold;}
 .button {
   display:inline-block;
   font-weight:bold;
+  font-family:arial;
+  font-size:12px;
   cursor:pointer;
   color:var(--custom-color);
   background-color:var(--custom-back);

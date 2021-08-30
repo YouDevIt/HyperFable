@@ -308,7 +308,7 @@ var w={
     en:"You see nothing special in [the object].",
     it:"Non noti nulla di speciale [nell'oggetto]."},
   Character:{en:"Yourself",it:"Te stess[o]"},
-  Chardesc:{en:"as good-looking as ever",it:"bell[o] come sempre"},
+  Chardesc:{en:"as good-looking as ever",it:"piacente come sempre"},
   Yougoto:{
     en:"You go to [the object].",
     it:"Vai verso [l'oggetto]."
@@ -473,7 +473,7 @@ var w={
   },
   Arein:{
     en:"You are [in] [the object].",
-    it:"Non sei [in/su oggetto]."
+    it:"Sei [in/su oggetto]."
   },
   Arenotin:{
     en:"You are not in [the object].",
@@ -583,8 +583,12 @@ var it={
     }else{
       if(obj.it_femminile)
         return num==0?"un'":'una '
-      else
-        return num==0?'uno ':'un '
+      else{
+        if(num==0)
+          return "un "
+        else
+          return num==1?'uno ':'un '
+      }
     }
   },
   prepdi:function(obj){return it.prepart('di',obj)},
@@ -685,8 +689,8 @@ function Person(id){
 function isPerson(obj){return obj.type=='person'}
 
 var character=new Person('@character')
-character.name={en:'Yourself',it:'Te stess[o]'}
-character.desc={en:'as good-looking as ever',it:'bell[o] come sempre'}
+character.name=w.Character
+character.desc=w.Chardesc
 world.character=character
 
 function Room(id){
@@ -820,8 +824,10 @@ function msg(text){
   getel("$msg").start=msgcount
   for(var ct=msgtot;ct>=1;ct--)
     getel('$msg'+ct).innerHTML=getel('$msg'+(ct-1)).innerHTML
+  message(text)
   inner('$msg0',text)
 }
+function message(text){inner('$message',text)}
 
 function cap(txt){return txt.charAt(0).toUpperCase()+txt.slice(1)}
 
@@ -1183,8 +1189,6 @@ function moveto(id){
     return msg(x(w.Youalreadyin,obj))
   if(world.loc==obj.loc)
     return (isContainer(obj)?doenter:doclimb)(id)
-  if(getObj(world.loc).loc==obj.loc)
-    return (isContainer(obj)?doexit:dodescend)(id)
   return msg(x(w.Cantmovedirto,obj))
 }
 function jumpthrough(obj){
@@ -1198,8 +1202,12 @@ function jumpthrough(obj){
   var room=getObj(world.loc)
   if(oldloc.charAt(0)!="@")
     msg(x(w.Yougoto,room))
-  getel('$room').classList="animate__animated animate__flipOutX"
-  setTimeout(function(){showAll();getel('$room').classList="animate__animated animate__flipInX";},1300)
+  getel('$header').classList="header animate__animated animate__flipOutX"
+  setTimeout(function(){
+    message('')
+    showAll()
+    getel('$header').classList="header animate__animated animate__flipInX";
+  },1300)
 }
 function gothrough(obj){
   if(!isvisible(obj))
@@ -1212,10 +1220,13 @@ function gothrough(obj){
   var oldloc=world.loc
   world.loc=obj.roomto
   var room=getObj(world.loc)
-  if(oldloc.charAt(0)!="@")
+  if(room.id.charAt(0)!="@")
     msg(x(w.Yougoto,room))
-  getel('$room').classList="animate__animated animate__flipOutX"
-  setTimeout(function(){showAll();getel('$room').classList="animate__animated animate__flipInX";},1300)
+  getel('$header').classList="header animate__animated animate__flipOutX"
+  setTimeout(function(){
+    showAll()
+    getel('$header').classList="header animate__animated animate__flipInX";
+  },1300)
 }
 function examine(obj){
   if(!isvisible(obj))
@@ -1603,7 +1614,9 @@ function showRoom(){
   if(world.loc!=room.id)
     title+=' ('+x(w.intheobject,getObj(world.loc))+')'
   var str='<h2 id="'+room.id+'" draggable="false" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)">'+title+'</h2><p>'
-  if(room.entering&&!room.visited)
+  if(room.enteringfirst&&!room.visited)
+    str+='<i>'+x(room.enteringfirst)+'</i><p>'
+  else if(room.entering)
     str+='<i>'+x(room.entering)+'</i><p>'
   if(isvisible(room)){
     str+=mark(x(room.desc,room),true)
@@ -1675,6 +1688,7 @@ window.onload=function(){
   for(var ct=1;ct<=9;ct++){
     var el=document.createElement("li")
     el.id="$msg"+ct
+    el.style.opacity="0."+(10-ct)
     getel("$msg").appendChild(el)
   }
   saveWorld('$START')
@@ -1711,7 +1725,7 @@ an <i>HTML5</i> interface for <i>Interactive Fiction</i> works, created by
 <a href='mailto:leonardo.boselli@youdev.it'>Leonardo Boselli</a>.
 <p>The main actions to interact:<ul><li>Click on the highlighted words to perform the default action,
 i.e. examine the corresponding objects, move through an exit, etc.</li><li>Drag and drop the words
-to move the objects around, apply actions, and so on.<br>You can even drag verbs and drop words on
+to move the objects around, apply actions, and so on. You can even drag verbs and drop words on
 the character's name, or the name of the room. Try different combinations!</li></ul>`
 ,it:
 `Questa storia è stata creata con <b><a href='https://github.com/YouDevIt/HyperFable'>HyperFable</a></b>,
@@ -1720,7 +1734,7 @@ un'interfaccia <i>HTML5</i> per lavori di <i>Narrativa Interattiva</i>, creata d
 <p>Le principali azioni per interagire:<ul><li>Clicca sulle parole evidenziate per effettuare l'azione di base,
 cioè esaminare gli oggetti corrispondenti, muoverti attraverso un'uscita, ecc.</li><li>Trascina e rilascia
 (drag & drop) le parole per cambiare la posizione degli oggetti, applicare azioni e così via.
-<br>Puoi anche trascinare verbi e spostare parole sul nome del personaggio o sul nome della stanza.
+Puoi anche trascinare verbi e spostare parole sul nome del personaggio o sul nome della stanza.
 Tenta diverse combinazioni!</li></ul>`
 }
 var t=new Thing('cube')
@@ -1742,7 +1756,7 @@ t2.desc={
   en:"A {table}. <i>Drag objects on it.</i>",
   it:"Un {table}. <i>Trascina oggetti su di esso.</i>"
 }
-t2.enterable=true
+t2.climbable=true
 t2.fixedinplace=true
 addObj(r,t2)
 t=new Thing('apple')
