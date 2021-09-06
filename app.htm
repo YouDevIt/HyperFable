@@ -19,26 +19,26 @@
 </th></tr>
 -->
 <tr><th>
-<label class="dark">DARK <input id="themecheckbox" type="checkbox" onclick="changeTheme()"></label>
+<label id="$dark" class="dark">DARK</label> <input id="themecheckbox" type="checkbox" onclick="changeTheme()">
 </th></tr>
-<tr><th><hr></th></tr>
+<tr><th>&nbsp;</th></tr>
 <tr><th>
 <button id="$savefile" type="button" class="button" onclick="download()">SAVE FILE</button>
 </th></tr><tr><th>
 <label id="$loadfile" for="file-upload" class="custom-file-upload">&nbsp;LOAD FILE&nbsp;</label>
 <input id="file-upload" type="file" onchange="loadfile(event)" accept="text/plain">
 </th></tr>
-<tr><th><hr></th></tr>
+<tr><th>&nbsp;</th></tr>
 <tr><th>
 <button id="$save" type="button" class="button" onclick="saveWorld()">SAVE</button>
 </th></tr><tr><th>
 <button id="$restore" type="button" class="button" onclick="loadWorld()">RESTORE</button>
 </th></tr>
-<tr><th><hr></th></tr>
+<tr><th>&nbsp;</th></tr>
 <tr><th>
 <button id="$restart" type="button" class="button" onclick="restart()">RESTART</button>
 </th></tr>
-<tr><th><hr></th></tr>
+<tr><th>&nbsp;</th></tr>
 <tr><th>
 <svg id="$en" class="flag" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 30" width="32" onclick="changelang('en')">
   <clipPath id="t">
@@ -57,7 +57,6 @@
   <rect width="1" height="2" x="2" fill="#ce2b37"/>
 </svg>
 </th></tr>
-<tr><th><hr></th></tr>
 </table>
 
 <div class="content">

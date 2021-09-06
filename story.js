@@ -1,6 +1,8 @@
 //// example world
 
-var i,t,r,r2
+{
+
+let i,t,r,r2
 
 // intro
 
@@ -14,11 +16,17 @@ i.release="1"
 i.date="2021-08-23"
 i.code="EXST"
 
+t=new Person('@yourself')
+t.name=w.Character
+t.desc=w.Chardesc
+i.addObj(t)
+setChar(t)
+
 t=new Exit("Start",i,'kitchen')
-addName(t,"it","Inizia")
+t.addName("it","Inizia")
 
 t=new Portal("Help",i,'@help','@world-help')
-addName(t,"it","Aiuto")
+t.addName("it","Aiuto")
 
 t=new Portal("About",i,'@about','@world-about')
 
@@ -27,39 +35,49 @@ t=new Portal("About",i,'@about','@world-about')
 // kitchen
 
 r=new Room('kitchen')
-addName(r,'it','cucina')
+r.addName('it','cucina')
 r.it_femminile=true
 r.desc={
   en:"A large kitchen with a {table}.",
   it:"Un'ampia cucina in cui vedi un {table}."
 }
+
 t=new Thing('apple')
-addName(t,'it','mela')
+t.addName('it','mela')
+t.desc={
+  en:"An edible {apple}.",
+  it:"Una {apple} appetitosa."
+}
 t.it_femminile=true
 t.edible=true
-addObj(r,t)
+r.addObj(t)
+
 t=new Thing('hat')
-addName(t,'it','cappello')
+t.addName('it','cappello')
 t.wearable=true
-addObj(r,t)
+r.addObj(t)
+
 t=new Thing('coat')
-addName(t,'it','cappotto')
+t.addName('it','cappotto')
 t.wearable=true
-addObj(r,t)
+r.addObj(t)
+
 t=new Thing('goose')
-addName(t,'it','oca')
+t.addName('it','oca')
 t.it_femminile=true
-addObj(r,t)
+r.addObj(t)
+
 t=new Thing('quill')
-addName(t,'it','penna')
+t.addName('it','penna')
 t.it_femminile=true
-addObj(r,t)
+r.addObj(t)
 t=new Supporter('table')
-addName(t,'it','tavolo')
+t.addName('it','tavolo')
 t.scenery=true
-addObj(r,t)
+r.addObj(t)
+
 t=new Container('box')
-addName(t,'it','scatola')
+t.addName('it','scatola')
 t.pushable=true
 t.it_femminile=true
 t.desc={
@@ -67,7 +85,8 @@ t.desc={
   it:"Una bella {box} [aperto o chiuso]."
 }
 t.closable=true
-addObj(r,t)
+t.enterable=true
+r.addObj(t)
 
 t=new Exit("kitchen-east",r,'garden')
 t.name=w.e
@@ -79,7 +98,7 @@ t.crossable=true
 // garden
 
 r2=new Room('garden')
-addName(r2,'it','giardino')
+r2.addName('it','giardino')
 r2.desc={en:"A green garden.",it:"Un verde giardino."}
 
 t=new Exit("garden-west",r2,'kitchen')
@@ -93,3 +112,5 @@ r2.desc={en:"A small garage.",it:"Un piccolo garage."}
 t=new Exit("garage-north",r2,'kitchen')
 t.name=w.n
 t.crossable=true
+
+}
