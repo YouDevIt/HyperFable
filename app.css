@@ -119,6 +119,12 @@ a:visited{color:var(--visited-color);}
 a:hover{color:var(--hover-color);}
 a:active{color:var(--active-color);}
 
+a.dec{
+  font-style:italic;
+  font-weight:bolder;
+  color:var(--action-color);
+}
+
 .flag:not(high){
   display:inline-block;
   box-shadow:4px 4px 4px var(--box-shadow);
@@ -232,9 +238,11 @@ input[type="file"] {
   cursor:move;
 }
 .person.dec{
-  border:1px dotted var(--decor-border);
+  border:2px dotted var(--decor-border);
   background:var(--decor-back);
   padding:2px 8px 2px 8px;
+  border-radius:8px;
+  box-shadow:2px 2px 4px var(--box-shadow);
 }
 .vehicle,.mount{
   border:2px dashed var(--decor-border);
@@ -252,7 +260,7 @@ table.menu{
 }
 
 li{line-height:24px;}
-li.msg:first-child{font-weight:bold;}
+/*li.msg:first-child{font-weight:bold;}*/
 
 ::selection {color:var(--default-back);background:var(--default-color);}
 

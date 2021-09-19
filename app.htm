@@ -19,7 +19,7 @@
 </th></tr>
 -->
 <tr><th>
-<label id="$dark" class="dark">DARK</label> <input id="themecheckbox" type="checkbox" onclick="changeTheme()">
+<label for="themecheckbox" id="$dark" class="dark">DARK</label> <input id="themecheckbox" type="checkbox" onclick="changeTheme()">
 </th></tr>
 <tr><th>&nbsp;</th></tr>
 <tr><th>
@@ -62,8 +62,9 @@
 <div class="content">
   <div class="header" id="$header">
     <div id='$room'></div>
-    <div class="message" id='$message'></div>
+    <hr>
     <div id='$inventory'></div>
+    <div class="message" id='$message'></div>
   </div>
   <div class="footer">
     <ol start="0" reversed id="$msg">
