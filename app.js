@@ -102,7 +102,12 @@ function decode_en(p1,obj1,obj2,dec1,dec2){
     case 'In': return isContainer(o)||(isRoom(o)&&!o.onloc)?'In':'On'
     case 'enter': return isContainer(o)?'enter':(o.seatable?'sit on':(o.climbable?'climb':'get on'))
     case 'exit': return isContainer(o)?'exit':(o.climbable?'descend':'get off')
-    case 'hour and minutes': {let date=new Date();return date.getHours()+':'+date.getMinutes()}
+    case 'hour and minutes': {
+      const date=new Date()
+      let min=date.getMinutes()
+      if(min<10) min='0'+min
+      return date.getHours()+':'+min
+    }
     default: return p1
   }
 }
@@ -144,10 +149,20 @@ function decode_it(p1,obj1,obj2,dec1,dec2){
     case 'Sei entrato': return isContainer(o)?'Sei entrato':(o.seatable?'Ti sei seduto':'Sei salito')
     case 'entrato': return isContainer(o)?'entrato':(o.seatable?'seduto':'salito')
     case 'uscito': return isContainer(o)?'uscito':'sceso'
-    case 'ora e minuti': {let date=new Date();return date.getHours()+':'+date.getMinutes()}
+    case 'ora e minuti': {
+      const date=new Date()
+      let min=date.getMinutes()
+      if(min<10) min='0'+min
+      return date.getHours()+':'+min
+    }
     default: return p1
   }
 }
+
+// functions
+
+const action={}
+const actions={}
 
 // sentences
 
@@ -275,11 +290,15 @@ const w={
     en:"[The object] [is] closed.",
     it:"[L'oggetto] [è] chius[o]."
   },
+  Itslocked:{
+    en:"[The object] [is] locked.",
+    it:"[L'oggetto] [è] chius[o] a chiave."
+  },
   Nospecial:{
     en:"You see nothing special in [the object].",
     it:"Non noti nulla di speciale [nell'oggetto]."},
   character:{en:"yourself",it:"tu in persona"},
-  chardesc:{en:"as good-looking as ever",it:"piacente come sempre"},
+  chardesc:{en:"As good-looking as ever.",it:"Piacente come sempre."},
   Yougoto:{
     en:"You go to [the object].",
     it:"Vai verso [l'oggetto]."
@@ -315,6 +334,10 @@ const w={
   Youtake:{
     en:"You take [the object] from [the object2].",
     it:"Hai preso [l'oggetto] [dall'oggetto2]."
+  },
+  Youtakeunder:{
+    en:"You take [the object] from under [the object2].",
+    it:"Hai preso [l'oggetto] da sotto [l'oggetto2]."
   },
   Youput:{
     en:"You put [the object] [in2] [the object2].",
@@ -520,15 +543,15 @@ const w={
   },
   youcantell:{
     en:"you could tell [list of topics]",
-    it:"potresti dir[gli] [lista di argomenti]"
+    it:"potresti parlar[gli] [lista di argomenti]"
   },
   butdontanswer:{
-    en:", but [the object] doesn't know what to answer.",
-    it:", ma [l'oggetto] non sa cosa rispondere."
+    en:"<br>[The object] ignores the question.",
+    it:"<br>[L'oggetto] ignora la domanda."
   },
   butdonttell:{
-    en:", but [the object] doesn't seem interested in the argument.",
-    it:", ma [l'oggetto] non sembra interessato all'argomento."
+    en:"<br>[The object] doesn't seem interested in the argument.",
+    it:"<br>[L'oggetto] non sembra interessato all'argomento."
   },
   Canttalk:{en:"You can't talk to [the object].",it:"Non puoi parlare [all'oggetto]."},
   Canttalkabout:{en:"You can't talk about [the object].",it:"Non puoi parlare [dell'oggetto]."},
@@ -545,7 +568,7 @@ const isvowel = ch => 'aeiouAEIOU'.includes(ch)
 
 const en={
   detart: obj => obj.proper?'':'the ',
-  indart: obj => obj.proper?'':(obj.singleton?en.detart(obj):(!obj.uncount?(isvowel(x(obj.name).charAt(0))?'an ':'a '):'some '))
+  indart: obj => obj.proper?'':(obj.singleton?en.detart(obj):((!obj.uncount||!obj.plural)?(isvowel(x(obj.name).charAt(0))?'an ':'a '):'some '))
 }
 
 // italian grammar rules
@@ -591,7 +614,7 @@ const it={
         else
           if(num==0) return "del "
           else return num==1?'dello ':'del '
-},
+  },
   prepdi: obj => it.prepart('di',obj),
   prepa:  obj => it.prepart('a',obj),
   prepda: obj => it.prepart('da',obj),
@@ -602,7 +625,7 @@ const it={
     const num=it.artnum(obj)
     let str=(prep=='di'?'de':(prep=='in'?'ne':prep))
     if(obj.plural)
-      if(obj.itfemminile) return str+='lle '
+      if(obj.it_femminile) return str+='lle '
       else return str+=num==2?'i ':'gli '
     else
       if(obj.it_femminile) return str+=num==0?"ll'":'lla '
@@ -623,7 +646,7 @@ class World {
   }
 }
 
-const isOffstage = id => getObj(id).loc=='@void'
+const isOffstage = id => getObj(id).loc==null||getObj(id).loc=='@void'
 
 class Obj {
   constructor(id,type) {
@@ -705,6 +728,7 @@ class Exit extends Obj {
   constructor(id, room, roomto, type) {
     super(id, type||'exit')
     this.roomto = roomto
+    this.scenery=true
     if(room) {
       room.exits.push(this.id)
       this.loc = room.id
@@ -717,6 +741,7 @@ class Portal extends Exit {
   constructor(id, room, roomto, worldto) {
     super(id, room, roomto, 'portal')
     this.worldto = worldto || '@world'
+    this.scenery=true
   }
 }
 const isPortal = obj => obj instanceof Portal
@@ -803,7 +828,10 @@ function nexttext(event,dir) {
   const obj=getObj(id)
   const oldcur=obj.cur
   obj.cur+=dir;
-  if(obj.cur>=0&&obj.cur<obj.par.length) return examine(obj)
+  if(obj.cur>=0&&obj.cur<obj.par.length){
+    if(action[id]) action[id]()
+    return examine(obj)
+  }
   obj.cur=oldcur
 }
 const isText = obj => obj instanceof Text
@@ -820,6 +848,7 @@ class Sequence extends Text {
   }
   execute = next=>{
     if(!next){
+      this.done=true
       world.execseq=this.id
       this.cur=0
     }
@@ -832,7 +861,7 @@ function nextsequence(id) {
   obj.cur++
   if(obj.cur>=0&&obj.cur<obj.par.length) return obj.execute(true)
   world.execseq=null
-  if(obj.action) obj.action()
+  if(action[id]) action[id]()
   else if(obj.roomto) jumpto(obj.roomto)
 }
 const isSequence = obj => obj instanceof Sequence
@@ -916,6 +945,7 @@ function saveWorld(savename){
 }
 
 function inflateWorld(loaded){
+  const newworld=JSON.parse(loaded)
   world=worlds['@world']=JSON.parse(loaded)
   for(const id in world.objects){
     const obj=getObj(id)
@@ -1088,7 +1118,7 @@ function drag(ev) {
 function drop(ev) {
   ev.preventDefault()
   if(world.execseq)
-    return msg('<b>'+x(w.Clickoncont)+'</b><p>'+x(getObj(world.execseq).desc))
+    return msg(x(getObj(world.execseq).desc+'<br><b>'+x(w.Clickoncont)+'</b>'))
   const source=ev.dataTransfer.getData("text")
   const drain=ev.target.id
   if(source.charAt(0)=="*"){
@@ -1163,6 +1193,14 @@ function imhere(obj){
   return false
 }
 
+function isempty(obj){
+  if(!obj.objects||obj.objects.length<=0) return true
+  for(const id of obj.objects)
+    if(!getObj(id).scenery&&id!=getCharId())
+      return false
+  return true
+}
+
 function dragndrop(source,drain){
   if(source=='@inventory'){
     if(drain=='@inventory') return
@@ -1199,8 +1237,7 @@ function dragndrop(source,drain){
 }
 
 function clickon(ev){
-  if(world.execseq)
-  return msg('<b>'+x(w.Clickoncont)+'</b><br>'+x(getObj(world.execseq).desc))
+  if(world.execseq) return msg(x(getObj(world.execseq).desc+'<br><b>'+x(w.Clickoncont)+'</b>'))
   if(ev.target.className=='action'){
     const words=ev.target.id.split(' ')
     return perform(words[0],words[1],words[2])
@@ -1254,7 +1291,7 @@ function talkto(topicid,talkerid){
   if(!isTopic(topic)) return msg(x(w.Canttalkabout,topic))
   let str=x(topic.request,talker)
   str+=(talker.topics.indexOf(topicid)<0?
-    (topic.question?w.butdontanswer:w.butdonttell,talker):
+    x(topic.question?w.butdontanswer:w.butdonttell,talker):
     ('<br>'+mark(x(topic.response,talker))))
   if(topic.rem)
     for(const id of topic.rem)
@@ -1265,6 +1302,7 @@ function talkto(topicid,talkerid){
       if(!talker.topics.includes(id))
         talker.topics.push(id)
   msg(str+suggesttopics(talker))
+  if(action[topicid]) action[topicid]()
 }
 function moveto(id){
   const obj=getObj(id)
@@ -1303,12 +1341,14 @@ function jumpthrough(obj){
   jumpto(obj.roomto,obj.worldto)
 }
 function gothrough(obj,nohook){
-  if(!nohook&&hookdo('gothrough',obj.id)) return
-  if(obj.action&&obj.action()) return
+  const id=obj.id
+  if(!nohook&&hookdo('gothrough',id)) return
+  if(action[id]&&action[id]()) return
   if(!isvisible(obj)) return msg(x(w.Cantseeexit,obj))
   const loc=getObj(getLoc())
   if(!isreachable(obj)) return msg(x(w.Cantreachexit,obj,loc))
   if(!isRoom(loc)&&!isTransport(loc)) return msg(x(w.Cantbecausein,loc))
+  if(obj.locked) return msg(x(w.Cantdo)+' '+x(w.Itslocked,obj))
   if(obj.closed) return msg(x(w.Cantdo)+' '+x(w.Itsclosed,obj))
   const istr=isTransport(loc)
   if(istr&&obj.onfoot) return msg(x(w.Cantbytransport,obj,loc))
@@ -1335,11 +1375,11 @@ function examine(obj,nohook){
 function suggestactions(obj){
   const actions=[]
   switch(obj.type){
+    case 'vehicle':
     case 'container':
-      if(obj.closable)
+        if(obj.closable)
         actions.push(obj.closed?'open':'close')
-    case 'supporter':
-    case 'thing':
+    default:
       if(!isFixed(obj)){
         if(isCarried(obj.id)) actions.push('drop')
         else if(!isWorn(obj.id)) actions.push('take')
@@ -1400,12 +1440,11 @@ function perform(action,id,id2){
   }
 }
 function hookdo(action,id,id2){
-  let obj=getObj(id)
-  let act=obj.actions
-  if(act&&act[action]) return act[action](id,id2)
+  let act=actions[id]
+  if(act&&act[action])
+    if(act[action](id,id2)) return true
   if(!id2) return false
-  obj=getObj(id2)
-  act=obj.actions
+  act=actions[id2]
   if(act&&act[action]) return act[action](id,id2)
   return false
 }
@@ -1417,6 +1456,7 @@ function doenter(id,nohook){
   if(!obj.enterable) return msg(x(w.Cantenter,obj))
   if(isCarried(id)) return msg(x(w.Cantenterheld,obj))
   if(isWorn(id)) return msg(x(w.Cantenterworn,obj))
+  if(obj.locked) return msg(x(w.Cantenter,obj)+' '+x(w.Itslocked,obj))
   if(obj.closed) return msg(x(w.Cantenter,obj)+' '+x(w.Itsclosed,obj))
   if(getLoc()!=obj.loc) return msg(x(w.Cantbecausenotin,getObj(obj.loc)))
   setLoc(id)
@@ -1428,6 +1468,7 @@ function doexit(id,nohook){
   if(id=='@inventory') return msg(x(w.Cantdo))
   const obj=getObj(id)
   if(getLoc()!=id) return msg(x(w.Arenotin,obj))
+  if(obj.locked) return msg(x(w.Cantexit,obj)+' '+x(w.Itslocked,obj))
   if(obj.closed) return msg(x(w.Cantexit,obj)+' '+x(w.Itsclosed,obj))
   setLoc(obj.loc)
   msg(x(w.Youexit,obj))
@@ -1512,7 +1553,10 @@ function dotake(id,nohook){
   if(isWorn(id)) return doremove(id)
   const org=getObj(sobj.loc)
   carry(sobj)
-  msg(x(w.Youtake,sobj,org))
+  if(org.underside&&org.underside.includes(id))
+    msg(x(w.Youtakeunder,sobj,org))
+  else
+    msg(x(w.Youtake,sobj,org))
   showAll()
 }
 function doremove(id,nohook){
@@ -1567,10 +1611,10 @@ function doput(id,toid,nohook){
     if(
       (id.charAt(0)=='-'&&sobj[id.substring(1)])
       ||(id.charAt(0)=='+'&&!sobj[id.substring(1)])
-      ||sobj.id==id
     )
       return msg(x(w.Cantputin,sobj,dobj))
   if(isContainer(dobj)){
+    if(dobj.locked) return msg(x(w.Cantdo)+' '+x(w.Itslocked,dobj))
     if(dobj.closed) return msg(x(w.Cantdo)+' '+x(w.Itsclosed,dobj))
     remove(getCarried(),id)
     dobj.addObj(sobj)
@@ -1606,7 +1650,10 @@ function doopen(id,nohook){
   if(!obj.closed) return msg(x(w.Alreadyopenclosed,obj))
   if(!obj.closable) return msg(x(w.Cantopen,obj))
   obj.closed=false
-  msg(x(obj.transparent?w.Youopen:w.Youopenrevealing,obj,obj.objects))
+  if(obj.transparent||isempty(obj))
+    msg(x(w.Youopen,obj))
+  else
+    msg(x(w.Youopenrevealing,obj,obj.objects))
   showAll()
 }
 function doclose(id,nohook){
@@ -1625,12 +1672,13 @@ function doclose(id,nohook){
 function doeat(id,nohook){
   if(!nohook&&hookdo('eat',id)) return
   if(id=='@inventory') return msg(x(w.Cantdo))
+  if(isOffstage(id)) return msg(x(w.Cantsee,getObj(id)))
   if(!isCarried(id)) dotake(id)
   if(!isCarried(id)) return
   const obj=getObj(id)
   if(!obj.edible) return msg(x(w.Canteat,obj))
   remove(getCarried(),id)
-  delete world.objects[id]
+  obj.loc='@void'
   msg(x(w.Youeat,obj))
   showAll()
 }
@@ -1638,12 +1686,13 @@ function dodrink(id,nohook){
   if(!nohook&&hookdo('drink',id)) return
   if(id=='@inventory') return msg(x(w.Cantdo))
   const obj=getObj(id)
+  if(isOffstage(id)) return msg(x(w.Cantsee,obj))
   if(!isCarried(obj.loc)) dotake(obj.loc)
   if(!isCarried(obj.loc)) return
   if(!obj.drinkable) return msg(x(w.Cantdrink,obj))
   const objloc=getObj(obj.loc)
   remove(objloc.objects,id)
-  delete world.objects[id]
+  obj.loc='@void'
   msg(x(w.Youdrink,obj))
   showAll()
 }
@@ -1689,16 +1738,7 @@ function showRoom(){
   else if(room.entering) str+=mark(x(room.entering))+'<p>'
   if(isvisible(room)){
     str+=mark(x(room.desc||'',room),true)
-    if(room.objects.length>0){
-      let empty=true
-      for(const id of room.objects)
-        if(!getObj(id).scenery&&id!=getCharId()){
-          empty=false
-          break
-        }
-      if(!empty)
-        str+='<p>'+yousee(room,true)
-    }
+    if(!isempty(room)) str+='<p>'+yousee(room,true)
   }
   for(const id of room.objects){
     if(id==getCharId()) continue
@@ -1717,8 +1757,8 @@ function showRoom(){
 function showInventory(){
   const c=getChar()
   let str='<font size="+2" color="red"><b id="@inventory" draggable="true" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)">'
-    +cap(x(c&&c.name?c.name:w.character,c))+"</b></font>, "
-    +x(c&&c.desc?c.desc:w.chardesc,c)+".<p>"
+    +cap(x(c&&c.name?c.name:w.character,c))+"</b></font>: "
+    +x(c&&c.desc?c.desc:w.chardesc,c)+"<p>"
   str+=youcarryandwear(true)
   for(const id of getCarried()){
     let obj=getObj(id)
@@ -1746,7 +1786,7 @@ function restart(){
   location.reload()
 }
 
-window.onbeforeunload = () => dontSave?null:saveWorld('$AUTOSAVE')
+window.onbeforeunload=()=>dontSave?null:saveWorld('$AUTOSAVE')
 
 window.onload=function(){
   darkMode=false
@@ -1879,6 +1919,7 @@ t.addName("it","Vai all'altra stanza")
 
 t=new Portal("help-exit",r,'@intro','@world')
 t.name={en:'Back to the story',it:'Torna alla storia'}
+t.proper=true
 
 t=new Portal("About",r,'@about','@world-about')
 

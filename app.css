@@ -193,6 +193,7 @@ input[type="file"] {
 }
 .exit.dec,.portal.dec{
   border:1px solid var(--decor-border);
+  background:var(--header-back);
   border-radius:10px;
   padding:2px 8px 2px 8px;
 }
