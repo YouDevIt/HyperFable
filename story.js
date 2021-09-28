@@ -85,7 +85,6 @@ t.desc={
   it:"Una bella {box} [aperto o chiuso]."
 }
 t.closable=true
-t.enterable=true
 r.addObj(t)
 
 t=new Exit("kitchen-east",r,'garden')

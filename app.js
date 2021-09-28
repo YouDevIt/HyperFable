@@ -184,7 +184,7 @@ const w={
   Insertfile:{en:"Insert the filename:",it:"Nome del file?"},
   by:{en:"by ",it:"di "},
   Nothingtodo:{en:"Nothing to do.",it:"Niente da fare."},
-  Youcando:{en:"(You could [list of actions])",it:"(Puoi [lista di azioni])"},
+  Youcando:{en:"(You could [list of actions])",it:"(Potresti [lista di azioni])"},
   Cantdo:{en:"You can't do that.",it:"Non puoi farlo."},
   Cantmovedirto:{
     en:"You can't move directly to [the object].",
@@ -543,7 +543,7 @@ const w={
   },
   youcantell:{
     en:"you could tell [list of topics]",
-    it:"potresti parlar[gli] [lista di argomenti]"
+    it:"potresti dir[gli] [lista di argomenti]"
   },
   butdontanswer:{
     en:"<br>[The object] ignores the question.",
@@ -568,7 +568,7 @@ const isvowel = ch => 'aeiouAEIOU'.includes(ch)
 
 const en={
   detart: obj => obj.proper?'':'the ',
-  indart: obj => obj.proper?'':(obj.singleton?en.detart(obj):((!obj.uncount||!obj.plural)?(isvowel(x(obj.name).charAt(0))?'an ':'a '):'some '))
+  indart: obj => obj.proper?'':(obj.singleton?en.detart(obj):((!obj.uncount&&!obj.plural)?(isvowel(x(obj.name).charAt(0))?'an ':'a '):'some '))
 }
 
 // italian grammar rules
