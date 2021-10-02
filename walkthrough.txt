@@ -1,0 +1,237 @@
+
+N.B.
+[words] means click on words and
+[words1 -> words2] means drag words1 on words2
+
+--- "The Library" walkthrough ---
+
+[Prologue]
+[uncanny guy]
+
+Follow the conversation until pills are shown, then
+choose [red pill] or [blue pill]
+[eat it]
+
+- In room "Lewis Carroll":
+
+[book]
+[take it]
+[little bottle]
+[liquid]
+[drink it]
+[table]
+[look under it]
+[little box]
+[open it]
+[very small cake]
+[eat it]
+[continue]
+[continue]
+
+You got the "little box"
+
+- In room "Jules Verne"
+
+[book]
+[take it]
+[book]
+[open it]
+[bookmark]
+[>>]
+[>>]
+[burner]
+[switch off it]
+[door]
+
+Secondary mission accomplished
+
+- In room "Arthur Conan Doyle"
+
+[book]
+[take it]
+[book]
+[open it]
+[bookmark]
+[>>]
+[>>]
+[window]
+[open it]
+[sill]
+[ointment box]
+[open it]
+[couple of pills]
+[take it]
+
+You got the "couple of pills"
+
+- In room "Robert Louis Stevenson"
+
+When you own the "couple of pills"
+
+[book]
+[take it]
+[bottle -> glass]
+[couple of pills -> glass]
+[continue]
+[continue]
+[continue]
+[continue]
+[continue]
+
+You killed Billy Bones
+
+- In room "Mary Shelley"
+
+After killing Billy Bones
+
+[book]
+[take it]
+[icebox]
+[open it]
+[leg -> Long John Silver]
+[continue]
+
+Secondary mission accomplished
+
+- In room "Jonathan Swift"
+
+When you own the "little box"
+
+[book]
+[take it]
+[book]
+[open it]
+[bookmark]
+[>>]
+[Lemuel Gulliver]
+[private pocket]
+[open it]
+[pair of eyeglasses]
+[take it]
+[little box]
+[open it]
+[very small cake]
+[eat it]
+[continue]
+[continue]
+
+You got a "pair of eyeglasses" (very large)
+
+- In room "Homer"
+
+When you own the "pair of eyeglasses" (very large)
+
+[book]
+[take it]
+[pair of eyeglasses -> Polyphemus]
+[continue]
+[continue]
+[continue]
+[continue]
+[continue]
+[continue]
+[continue]
+
+Ulysses is dead
+
+- In room "Dante Alighieri"
+
+When Ulysses is dead
+
+[book]
+[take it]
+[door of hell]
+[steep ravine]
+[Ulysses]
+[continue]
+[continue]
+[continue]
+[continue]
+[continue]
+
+Ulysses' primary mission accomplished
+
+- In room "Bram Stoker"
+
+[book]
+[take it]
+[book]
+[open it]
+[bookmark]
+[>>]
+[wagon]
+[climb it]
+[box]
+[knife -> Dracula]
+[continue]
+[continue]
+[continue]
+
+You got the "knife"
+
+- In room "Alexandre Dumas, père"
+
+When you own the "knife"
+
+[book]
+[take it]
+[plank]
+[look under it]
+[large loose stone]
+[pull it]
+[tunnel]
+[jute sack]
+[open it]
+[abbé Faria's corpse]
+[pull it]
+[abbé Faria's corpse -> tunnel]
+[plank]
+[look under it]
+[large loose stone]
+[push it]
+[plank]
+[sit on it]
+[jute sack]
+[enter it]
+[jute sack]
+[close it]
+[continue]
+[continue]
+[continue]
+[continue]
+[continue]
+[continue]
+[continue]
+
+Edmond Dantès is swallowed by the Shark
+
+- In room "Carlo Collodi"
+
+[book]
+[take it]
+[Edmond Dantès]
+[who he is]
+[about the Shark]
+[about the vengeance]
+[how to escape]
+[how to kill the Shark]
+[about Pinocchio]
+
+The castaways can't do more
+
+- In room "Herman Melville"
+
+When castaways can't do more
+
+[book]
+[take it]
+[main mast]
+[climb it]
+[continue]
+[continue]
+[continue]
+[continue]
+[continue]
+
+Edmond's primary mission accomplished
+
