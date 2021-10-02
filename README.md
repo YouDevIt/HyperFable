@@ -7,7 +7,7 @@ The current version requires programming in *Javascript*, but more author friend
 
 ## Files in this release
 
-**"The_Library.html"** / 1.4 / 2021-10-02
+* **"The_Library.html"** / 1.4 / 2021-10-02
 
 This is a complete game in a single file as it entered the *IFcomp 2021*.
 If you need help to solve the puzzles, consult the *"walkthrough.txt"* 
