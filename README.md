@@ -12,7 +12,7 @@ The current version requires programming in *Javascript*, but more author friend
 This is a complete game in a single file as it entered the *IFcomp 2021*.
 If you need help to solve the puzzles, consult the *"walkthrough.txt"* 
 
-It contains all the following files (also separated in the repository):
+It contains all the following files (separated in the repository):
 
 * **"app.js"**: the *HyperFable* engine (generic code)
 * **"story.js"**: the story file (code specific to the game)
