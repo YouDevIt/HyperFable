@@ -8,8 +8,8 @@ N.B.
 [Prologue]
 [uncanny guy]
 
-Follow the conversation until pills are shown, then
-choose [red pill] or [blue pill]
+Follow the conversation until pills are shown,
+then choose [red pill] or [blue pill]
 [eat it]
 
 - In room "Lewis Carroll":
