@@ -1,4 +1,17 @@
 
+IMPORTANT
+I was too "creative" in designing the navigation system.
+Moving from a room to another requires to choose
+among "right", "left" and "back", but the outcome
+depends on the room you come from, so it's very
+confusing without drawing a map. To figure out the
+connections is a puzzle per se, but if you are in a
+hurry (as probably you are if you're reading this
+walkthrough), I track here a possible course.
+However you can visit the rooms in other orders,
+if you like orienteering, and complete the secondary
+missions in the order that you prefer.
+
 N.B.
 [words] means click on words and
 [words1 -> words2] means drag words1 on words2
@@ -9,10 +22,13 @@ N.B.
 [uncanny guy]
 
 Follow the conversation until pills are shown,
-then choose [red pill] or [blue pill]
+then choose [red pill] or [blue pill] and
+
 [eat it]
 
 - In room "Lewis Carroll":
+
+(At the beginning room "Stevenson" is behind)
 
 [book]
 [take it]
@@ -30,6 +46,8 @@ then choose [red pill] or [blue pill]
 
 You got the "little box"
 
+(From here go "left")
+
 - In room "Jules Verne"
 
 [book]
@@ -44,6 +62,8 @@ You got the "little box"
 [door]
 
 Secondary mission accomplished
+
+(go "right", "right", "right", and "left")
 
 - In room "Arthur Conan Doyle"
 
@@ -64,6 +84,8 @@ Secondary mission accomplished
 
 You got the "couple of pills"
 
+(go "right", "right")
+
 - In room "Robert Louis Stevenson"
 
 When you own the "couple of pills"
@@ -80,6 +102,8 @@ When you own the "couple of pills"
 
 You killed Billy Bones
 
+(go "right", "right")
+
 - In room "Mary Shelley"
 
 After killing Billy Bones
@@ -92,6 +116,8 @@ After killing Billy Bones
 [continue]
 
 Secondary mission accomplished
+
+(go "left", "left")
 
 - In room "Jonathan Swift"
 
@@ -117,6 +143,8 @@ When you own the "little box"
 
 You got a "pair of eyeglasses" (very large)
 
+(go "left", "right", "left")
+
 - In room "Homer"
 
 When you own the "pair of eyeglasses" (very large)
@@ -134,6 +162,8 @@ When you own the "pair of eyeglasses" (very large)
 
 Ulysses is dead
 
+(go "right")
+
 - In room "Dante Alighieri"
 
 When Ulysses is dead
@@ -150,6 +180,9 @@ When Ulysses is dead
 [continue]
 
 Ulysses' primary mission accomplished
+(There is the epilogue if you choose the blue pill)
+
+(go "left", "right", "right")
 
 - In room "Bram Stoker"
 
@@ -168,6 +201,8 @@ Ulysses' primary mission accomplished
 [continue]
 
 You got the "knife"
+
+(go "right", "left")
 
 - In room "Alexandre Dumas, père"
 
@@ -205,6 +240,8 @@ When you own the "knife"
 
 Edmond Dantès is swallowed by the Shark
 
+(go "back")
+
 - In room "Carlo Collodi"
 
 [book]
@@ -218,6 +255,8 @@ Edmond Dantès is swallowed by the Shark
 [about Pinocchio]
 
 The castaways can't do more
+
+(go "left")
 
 - In room "Herman Melville"
 
@@ -234,4 +273,5 @@ When castaways can't do more
 [continue]
 
 Edmond's primary mission accomplished
+(There is the epilogue if you choose the red pill)
 
