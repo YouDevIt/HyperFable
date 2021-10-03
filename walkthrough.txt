@@ -180,7 +180,7 @@ When Ulysses is dead
 [continue]
 
 Ulysses' primary mission accomplished
-(There is the epilogue if you choose the blue pill)
+(There is the epilogue if you chose the blue pill)
 
 (go "left", "right", "right")
 
@@ -273,5 +273,5 @@ When castaways can't do more
 [continue]
 
 Edmond's primary mission accomplished
-(There is the epilogue if you choose the red pill)
+(There is the epilogue if you chose the red pill)
 
