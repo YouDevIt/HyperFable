@@ -41,7 +41,7 @@ const ww={
     it:`Hai riempito [l'oggetto] con [l'oggetto2].`
   },
   Alreadyfullempty:{
-    en:`[The object] is already [fill or empty].`,
+    en:`[The object] is already [full or empty].`,
     it:`[L'oggetto] è già [pieno o vuoto].`
   },
   Eatingpill:{
@@ -156,8 +156,8 @@ i.note={
   en:"<font size='-1'><i><b>N.B.</b> All the excerpts of the books are taken from the texts available on the <a href='https://www.gutenberg.org/'>Project Gutenberg</a> website.</i></font>",
   it:"<font size='-1'><i><b>N.B.</b> Tutti gli estratti dei libri sono presi dai testi disponibili sul sito del <a href='https://www.gutenberg.org/'>Progetto Gutenberg</a> e tradotti dall'inglese.</i></font>"
 }
-i.release="1.3"
-i.date="2021-09-28"
+i.release="1.4"
+i.date="2021-10-05"
 i.entering={en:
 `<blockquote><i>
 &ldquo;The universe (which others call the Library) is composed of an indefinite, perhaps infinite number of hexagonal galleries. In the center of each gallery is a ventilation shaft, bounded by a low railing. From any hexagon one can see the floors above and below - one after another, endlessly&hellip;&rdquo;
@@ -597,7 +597,7 @@ t.par=[
 {en:`
 After eating the pastry, everything around you shrinks and returns to normal size. Who knows what would have happened if you had eaten the pastry while you were your normal size. But you realize that there is a new pastry in the box, so you want to try, but at that moment you hear a voiceover that says:
 `,it:`
-Dopo aver mangiato il pasticcino, tutto intono a te si rimpicciolisce e torna alle dimensioni normali. Chissà cosa sarebbe successo se tu avessi mangiato il pasticcino mentre eri delle tue dimensioni normali. Però ti accorgi che nella cassettina c'è un nuovo pasticcino, perciò ti viene voglia di provare, ma in quel momento senti una voce fuori campo che dice:
+Dopo aver mangiato il pasticcino, tutto intorno a te si rimpicciolisce e torna alle dimensioni normali. Chissà cosa sarebbe successo se tu avessi mangiato il pasticcino mentre eri delle tue dimensioni normali. Però ti accorgi che nella cassettina c'è un nuovo pasticcino, perciò ti viene voglia di provare, ma in quel momento senti una voce fuori campo che dice:
 `},
 {en:`
 "I see that you have learned to experiment with the strange rules of this world. As a reward you can keep the small box: <i>if you need to pass it to other characters, just place it on the corresponding lectern</i>. Have fun!"
@@ -1135,7 +1135,6 @@ action.mark_c=()=>{
       it:'Un {fr_burner} a gas. Viene usato per illuminare e riscaldare la stanza. Il bruciatore è [acceso o spento].'
     }
     burner.switchable=true
-    burner.switchedon=true
   }
 }
 t3.par=[
@@ -1253,6 +1252,7 @@ t.desc={
   en:'A gas {fr_burner}. It is used to illuminate and heat the room.',
   it:'Un {fr_burner} a gas. Viene usato per illuminare e riscaldare la stanza.'}
 t.fixed=true
+t.switchedon=true
 r.addObj(t)
 
 t=new Person('Passepartout')
@@ -1852,6 +1852,7 @@ t3.name={en:'water',it:'acqua'}
 t3.it_femminile=true
 t3.uncount=true
 t3.drinkable=true
+t3.fixed=true
 t3.desc={en:`Some {sr_water}.`,it:`Dell'{sr_water}.`}
 t2.addObj(t3)
 
@@ -3655,7 +3656,7 @@ newTopic('charon_virgil',
 )
 newTopic('charon_nobody',
 'why there is no soul around there','perché non c\'è nessun\'anima lì intorno',true,
-`"It's strange. Last time I remember that there were so many souls here waiting for a passage to the other shore", you said a little surprised.`,`"È strano. La scosa volta ricordo che c'erano tante anime che aspettavano qui un passaggio per l'altra riva", constati un po\' stupito.`,
+`"It's strange. Last time I remember that there were so many souls here waiting for a passage to the other shore", you said a little surprised.`,`"È strano. La scorsa volta ricordo che c'erano tante anime che aspettavano qui un passaggio per l'altra riva", constati un po\' stupito.`,
 `Charon replied disconsolately: "It's been some centuries since you saw a dead soul here. The people up there must have changed religion, or they all follow the path of holiness."`,`Caronte rispose sconsolato: "È da quanche secolo che non si vede anima morta da queste parti. La gente là sopra deve aver cambiato religione, o seguono tutti la via della santità."`,
 ['charon_othershore']
 )
@@ -3705,10 +3706,10 @@ Ma Ulisse lo interrompe e indica qualcosa alle sue spalle: "Guardate! Una scimmi
 `},
 {en:`
 Dante and Charon turn around trying to see something in the darkness, but nothing could be distinguished. Dante thinks that Ulysses had seen Cerberus.
-<br>When they finally turn back, they see Ulysses far away, traveling fast on the calm waters of the Acheron. That river must have flowed into the Ocean River somewhere - the Homeric hero thinks - and he had always wanted to sail there sooner or later.
+<br>When they finally turn back, they see Ulysses far away, traveling fast on the calm waters of the Acheron sailing Charon's boat. That river must have flowed into the Ocean River somewhere - the Homeric hero thinks - and he had always wanted to sail there sooner or later.
 `,it:`
-Dante e Caronte si voltano cercando di vedere qualcosa nell'oscurità, ma non distinguono nulla. Dante pensa che Ulisse avesse scorto Cerbero.
-<br>Quando alla fine si voltarono, vedono Ulisse ormai lontano che viaggia veloce sulle tranquille acque dell'Acheronte. Quel fiume doveva sfociare da qualche parte nel fiume Oceano - pensa l'eroe omerico - e lui aveva sempre desiderato navigarci prima o poi.
+Dante e Caronte si voltano cercando di vedere qualcosa nell'oscurità, ma non distinguono nulla. Dante pensa che Ulisse abbia scambiato Cerbero per una scimmia a tre teste.
+<br>Ma quando alla fine si voltano di nuovo, vedono Ulisse ormai lontano che viaggia veloce sulle tranquille acque dell'Acheronte remando sulla barca di Caronte. Quel fiume doveva sfociare da qualche parte nel fiume Oceano - pensa l'eroe omerico - e lui aveva sempre desiderato navigarci prima o poi.
 `},
 ]
 
